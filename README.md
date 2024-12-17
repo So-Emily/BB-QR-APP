@@ -1,3 +1,9 @@
+# Booze Buddy QR Application
+
+[![Next.js](https://img.shields.io/badge/Next.js-12.0.7-blue.svg)](https://nextjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-14.17.0-green.svg)](https://nodejs.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
@@ -20,6 +26,38 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Features
+
+- **Next.js**: The React framework for production.
+- **TypeScript**: Typed JavaScript at Any Scale.
+- **Tailwind CSS**: Rapidly build modern websites without ever leaving your HTML.
+- **NextAuth.js**: Authentication for Next.js.
+- **MongoDB**: The database for modern applications.
+
+## Project Structure
+
+```plaintext
+.env
+.env.local
+.gitignore
+.next/
+eslint.config.mjs
+next-env.d.ts
+next.config.ts
+package.json
+postcss.config.mjs
+public/
+README.md
+src/
+    app/
+    components/
+    lib/
+    pages/
+    styles/
+tailwind.config.ts
+tsconfig.json
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
@@ -34,3 +72,7 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
