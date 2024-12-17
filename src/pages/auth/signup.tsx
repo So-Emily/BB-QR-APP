@@ -67,7 +67,7 @@ const SignUpPage = () => {
                                 value="supplier"
                                 checked={role === 'supplier'}
                                 onChange={() => setRole('supplier')}
-                                className="form-radio"
+                                className="form-radio text-black"
                             />
                             <span>Supplier</span>
                         </label>
@@ -78,7 +78,7 @@ const SignUpPage = () => {
                                 value="store-manager"
                                 checked={role === 'store-manager'}
                                 onChange={() => setRole('store-manager')}
-                                className="form-radio"
+                                className="form-radio text-black"
                             />
                             <span>Store Manager</span>
                         </label>
