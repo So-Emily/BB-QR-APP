@@ -1,0 +1,7 @@
+/* src/pages/store/Dashboard.module.css */
+.title {
+    text-align: center;
+    font-size: 2rem;
+    margin-top: 2rem;
+    color: #dadada;
+}

@@ -1,0 +1,27 @@
+.navbar {
+    background-color: gray;
+    padding: 16px;
+}
+
+.navList {
+    display: flex;
+    gap: 16px;
+    list-style-type: none;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.navItem {
+    color: white;
+    cursor: pointer;
+}
+
+.navItem:hover {
+    color: lightgray;
+}
+
+.rightAligned {
+    margin-left: auto;
+    display: flex;
+    gap: 16px;
+}
