@@ -38,7 +38,7 @@ const SignInPage = () => {
             <Navbar />
             <main className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
                 <h1 className="text-5xl font-bold mb-4 text-white">Booze Buddy</h1>
-                <h2 className="text-xl font-bold mb-6 text-white">sign in as</h2>
+                <h2 className="text-xl font-bold mb-4 text-white">sign in as</h2>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 {!role && (
                     <div className="flex flex-col items-center space-y-4 w-full max-w-md">
@@ -64,23 +64,23 @@ const SignInPage = () => {
                     </div>
                 )}
                 {role && (
-                    <form onSubmit={handleSignIn} className="mt-6 space-y-4 w-full max-w-md">
-                        <h2 className="text-2xl font-semibold text-white">
-                            {role === 'supplier' ? 'Supplier' : 'Store Manager'} Login
+                    <form onSubmit={handleSignIn} className="space-y-4 w-full max-w-md">
+                        <h2 className="text-2xl font-semibold text-white text-center">
+                            {role === 'supplier' ? 'Supplier' : 'Store Manager'}
                         </h2>
                         <input
                             type="text"
                             name="identifier"
                             placeholder="Username or Email"
                             required
-                            className="w-full px-4 py-2 border rounded"
+                            className="w-full px-4 py-2 border rounded text-black text-center"
                         />
                         <input
                             type="password"
                             name="password"
                             placeholder="Password"
                             required
-                            className="w-full px-4 py-2 border rounded"
+                            className="w-full px-4 py-2 border rounded text-black text-center"
                         />
                         <button
                             type="submit"
@@ -88,13 +88,15 @@ const SignInPage = () => {
                         >
                             Login
                         </button>
-                        <button
-                            type="button"
-                            onClick={() => setRole(null)}
-                            className="w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                        >
-                            Back
-                        </button>
+                        <div className='flex justify-center'>
+                            <button
+                                type="button"
+                                onClick={() => setRole(null)}
+                                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                            >
+                                Back
+                            </button>
+                        </div>
                     </form>
                 )}
             </main>
