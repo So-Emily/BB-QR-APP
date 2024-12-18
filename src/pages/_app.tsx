@@ -1,9 +1,9 @@
 // src/pages/_app.tsx
-import { SessionProvider, useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
-import { AppProps } from 'next/app';
 import { useEffect } from 'react';
-import '../styles/globals.css';
+import { useRouter } from 'next/router';
+import { SessionProvider, useSession } from 'next-auth/react';
+import type { AppProps } from 'next/app';
+import '@/styles/globals.css';
 
 function AuthWrapper({ children }: { children: React.ReactNode }) {
     const { data: session, status } = useSession();
@@ -11,7 +11,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (status === 'authenticated') {
-            if (session.user.role === 'supplier' && router.pathname !== '/supplier/dashboard') {
+            if (session.user.role === 'supplier' && !['/supplier/dashboard', '/supplier/add-product', '/supplier/view-products'].includes(router.pathname)) {
                 router.push('/supplier/dashboard');
             } else if (session.user.role === 'store-manager' && router.pathname !== '/store/dashboard') {
                 router.push('/store/dashboard');

@@ -16,6 +16,7 @@ const HomePage = () => {
                         Go to Login Page
                     </button>
                 </Link> */}
+                
             </main>
         </div>
     );
