@@ -64,7 +64,7 @@ const ViewProductsPage = () => {
                                     alt={product.name}
                                     fill
                                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                    style={{ objectFit: 'contain' }}
+                                    style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
                                 />
                             </div>
                             <h2 className="text-xl font-bold mt-4">{product.name}</h2>
@@ -81,7 +81,11 @@ const ViewProductsPage = () => {
                             )}
                             <div className="mt-2">
                                 <h3 className="font-bold">Origin:</h3>
-                                <p>{product.location.city}, {product.location.state}, {product.location.country}</p>
+                                <p>
+                                    {product.location.city}
+                                    {product.location.state && `, ${product.location.state}`}
+                                    {product.location.country && `, ${product.location.country}`}
+                                </p>
                             </div>
                             {product.taste && product.taste.length > 0 && (
                                 <div className="mt-2">
