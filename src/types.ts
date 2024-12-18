@@ -3,6 +3,7 @@ export interface Product {
     name: string;
     description: string;
     pairing: string[];
+    taste: string[];
     location: {
         city: string;
         state: string;

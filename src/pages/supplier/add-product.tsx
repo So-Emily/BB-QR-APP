@@ -33,7 +33,7 @@ const AddProductPage = () => {
             return;
         }
 
-        if (!session || !session.user) {
+        if (!session || !session.user || !session.user.name) {
             setError('User not authenticated');
             return;
         }

@@ -11,16 +11,16 @@ const ViewProductsPage = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (!session || !session.user) {
+        if (!session || !session.user || !session.user.name) {
             setError('User not authenticated');
             return;
         }
 
         const fetchProducts = async () => {
             try {
-                const supplierName = session.user.name.replace(/\s+/g, '-').toLowerCase();
+                const supplierName = session.user.name?.replace(/\s+/g, '-').toLowerCase() ?? '';
                 const productKeys = await listFilesInS3(`suppliers/${supplierName}/products/`);
-                const jsonKeys = productKeys.filter(key => key.endsWith('product.json'));
+                const jsonKeys = productKeys.filter((key): key is string => key !== undefined && key.endsWith('product.json'));
                 const productPromises = jsonKeys.map(async (key: string) => {
                     try {
                         const productData = await fetchProductDataFromS3(key);
@@ -81,7 +81,7 @@ const ViewProductsPage = () => {
                             )}
                             <div className="mt-2">
                                 <h3 className="font-bold">Origin:</h3>
-                                <p>{product.location.city}, {product.location.state}</p>
+                                <p>{product.location.city}, {product.location.state}, {product.location.country}</p>
                             </div>
                             {product.taste && product.taste.length > 0 && (
                                 <div className="mt-2">
