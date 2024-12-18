@@ -10,19 +10,28 @@ const Navbar = () => {
         <nav className={styles.navbar}>
             <ul className={styles.navList}>
                 <li>
-                    {/* Home changes depending on user being logged in or not */}
                     <Link href={session ? (session.user.role === 'supplier' ? '/supplier/dashboard' : '/store/dashboard') : '/'} passHref>
                         <span role="link" className={styles.navItem}>Home</span>
                     </Link>
                 </li>
+                {status === 'authenticated' && session.user.role === 'supplier' && (
+                    <>
+                        <li>
+                            <Link href="/supplier/view-products" passHref>
+                                <span role="link" className={styles.navItem}>View Products</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/supplier/add-product" passHref>
+                                <span role="link" className={styles.navItem}>Add Product</span>
+                            </Link>
+                        </li>
+                    </>
+                )}
                 <li className={styles.rightAligned}>
                     {status === 'authenticated' ? (
-                        <>
-                            {/* Signout Button */}
-                            <button onClick={() => signOut({ callbackUrl: '/' })} className={styles.navItem}>Logout</button>
-                        </>
+                        <button onClick={() => signOut({ callbackUrl: '/' })} className={styles.navItem}>Logout</button>
                     ) : (
-                        // Login Button
                         <Link href="/auth/signin" passHref>
                             <span role="link" className={styles.navItem}>Login</span>
                         </Link>
