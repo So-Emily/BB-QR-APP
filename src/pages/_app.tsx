@@ -11,7 +11,14 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         if (status === 'authenticated') {
-            if (session.user.role === 'supplier' && !['/supplier/dashboard', '/supplier/add-product', '/supplier/view-products'].includes(router.pathname)) {
+            const supplierPaths = [
+                '/supplier/dashboard',
+                '/supplier/add-product',
+                '/supplier/view-products',
+                '/supplier/qrcodes',
+            ];
+            const isSupplierProductPage = router.pathname.startsWith('/supplier/products/');
+            if (session.user.role === 'supplier' && !supplierPaths.includes(router.pathname) && !isSupplierProductPage) {
                 router.push('/supplier/dashboard');
             } else if (session.user.role === 'store-manager' && router.pathname !== '/store/dashboard') {
                 router.push('/store/dashboard');

@@ -22,8 +22,22 @@ const Navbar = () => {
                             </Link>
                         </li>
                         <li>
+                            <Link href="/supplier/qrcodes" passHref>
+                                <span role="link" className={styles.navItem}>QR Codes</span>
+                            </Link>
+                        </li>
+                        <li>
                             <Link href="/supplier/add-product" passHref>
                                 <span role="link" className={styles.navItem}>Add Product</span>
+                            </Link>
+                        </li>
+                    </>
+                )}
+                {status === 'authenticated' && session.user.role === 'store-manager' && (
+                    <>
+                        <li>
+                            <Link href="/store/dashboard" passHref>
+                                <span role="link" className={styles.navItem}>Dashboard</span>
                             </Link>
                         </li>
                     </>
