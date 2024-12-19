@@ -1,7 +1,7 @@
-import { GetStaticPaths, GetStaticProps } from 'next';
+import { GetServerSideProps } from 'next';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar/Navbar';
-import { fetchProductDataFromS3, listFilesInS3 } from '@/lib/s3';
+import { fetchProductDataFromS3 } from '@/lib/s3';
 import { Product } from '@/types';
 import Image from 'next/image';
 
@@ -38,10 +38,10 @@ const ProductPage = ({ product }: ProductPageProps) => {
                         style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
                     />
                 </div>
-                <h1 className="text-2xl font-bold mt-4">{product.name}</h1>
-                <p className="mt-2">{product.description}</p>
+                <h1 className="text-2xl font-bold mt-4 text-center">{product.name}</h1>
+                <p className="mt-2 text-center">{product.description}</p>
                 {product.pairing.length > 0 && (
-                    <div className="mt-2">
+                    <div className="mt-2 text-center">
                         <h3 className="font-bold">Pairing:</h3>
                         <ul>
                             {product.pairing.map((pair, index) => (
@@ -50,7 +50,7 @@ const ProductPage = ({ product }: ProductPageProps) => {
                         </ul>
                     </div>
                 )}
-                <div className="mt-2">
+                <div className="mt-2 text-center">
                     <h3 className="font-bold">Origin:</h3>
                     <p>
                         {product.location.city}
@@ -59,7 +59,7 @@ const ProductPage = ({ product }: ProductPageProps) => {
                     </p>
                 </div>
                 {product.taste && product.taste.length > 0 && (
-                    <div className="mt-2">
+                    <div className="mt-2 text-center">
                         <h3 className="font-bold">Taste:</h3>
                         <ul>
                             {product.taste.map((t, index) => (
@@ -73,43 +73,14 @@ const ProductPage = ({ product }: ProductPageProps) => {
     );
 };
 
-export const getStaticPaths: GetStaticPaths = async () => {
-    const suppliers = await listFilesInS3('suppliers/');
-    const paths = [];
-
-    for (const supplier of suppliers) {
-        if (supplier) {
-            const supplierName = supplier.split('/')[1];
-            const productKeys = await listFilesInS3(`suppliers/${supplierName}/products/`);
-            const jsonKeys = productKeys.filter((key): key is string => key !== undefined && key.endsWith('product.json'));
-
-            for (const key of jsonKeys) {
-                const productName = key.split('/')[3];
-                paths.push({
-                    params: {
-                        supplierName,
-                        productName: productName.replace('.json', ''),
-                    },
-                });
-            }
-        }
-    }
-
-    return {
-        paths,
-        fallback: true,
-    };
-};
-
-export const getStaticProps: GetStaticProps = async ({ params }) => {
-    const { supplierName, productName } = params as { supplierName: string; productName: string };
+export const getServerSideProps: GetServerSideProps = async (context) => {
+    const { supplierName, productName } = context.params as { supplierName: string; productName: string };
     const productData = await fetchProductDataFromS3(`suppliers/${supplierName}/products/${productName}/product.json`);
 
     return {
         props: {
             product: productData,
         },
-        revalidate: 10, // Revalidate at most every 10 seconds
     };
 };
 

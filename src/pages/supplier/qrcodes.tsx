@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar/Navbar';
 import { listFilesInS3, fetchProductDataFromS3, uploadFileToS3 } from '@/lib/s3';
 import { Product } from '@/types';
 import { QRCodeCanvas } from 'qrcode.react';
+import QRCode from 'qrcode';
 import Link from 'next/link';
 
 const QRCodePage = () => {
@@ -33,6 +34,17 @@ const QRCodePage = () => {
                 });
                 const products = (await Promise.all(productPromises)).filter(product => product !== null);
                 setProducts(products);
+
+                // Generate and upload QR codes for each product
+                products.forEach(async (product) => {
+                    const qrCodeDataUrl = await QRCode.toDataURL(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/supplier/products/${supplierName}/${product.name.replace(/\s+/g, '-').toLowerCase()}`, { errorCorrectionLevel: 'high' });
+                    const response = await fetch(qrCodeDataUrl);
+                    const blob = await response.blob();
+                    const arrayBuffer = await blob.arrayBuffer();
+                    const buffer = Buffer.from(arrayBuffer);
+                    const qrCodeKey = `suppliers/${supplierName}/qrcodes/${product.name.replace(/\s+/g, '-').toLowerCase()}.svg`;
+                    await uploadFileToS3(qrCodeKey, buffer, 'image/svg');
+                });
             } catch (err) {
                 setError('Failed to fetch products: ' + err);
             }
@@ -40,26 +52,6 @@ const QRCodePage = () => {
 
         fetchProducts();
     }, [session]);
-
-    const saveQRCodeToS3 = async (dataUrl: string, supplierName: string, productName: string) => {
-        const response = await fetch(dataUrl);
-        const blob = await response.blob();
-        const arrayBuffer = await blob.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const formattedProductName = productName.replace(/\s+/g, '-').toLowerCase();
-        const fileName = `${formattedProductName}.png`;
-        const key = `suppliers/${supplierName}/qrcodes/${fileName}`;
-        await uploadFileToS3(key, buffer, 'image/png');
-    };
-
-    const handleQRCodeGenerated = async (dataUrl: string, productName: string) => {
-        if (!session || !session.user) {
-            setError('User not authenticated');
-            return;
-        }
-        const supplierName = session.user.name?.replace(/\s+/g, '-').toLowerCase() ?? '';
-        await saveQRCodeToS3(dataUrl, supplierName, productName);
-    };
 
     return (
         <div>
@@ -78,11 +70,6 @@ const QRCodePage = () => {
                                         size={256} // Increase the size of the QR code
                                         level="H"
                                         includeMargin={true}
-                                        onClick={async (e) => {
-                                            const canvas = e.target as HTMLCanvasElement;
-                                            const dataUrl = canvas.toDataURL('image/png');
-                                            await handleQRCodeGenerated(dataUrl, product.name);
-                                        }}
                                     />
                                 </div>
                             </Link>
