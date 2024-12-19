@@ -53,62 +53,65 @@ const ViewProductsPage = () => {
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {products.map((product, index) => (
-                        <Link
-                            key={index}
-                            href={`/supplier/products/${session.user.name?.replace(/\s+/g, '-').toLowerCase()}/${product.name.replace(/\s+/g, '-').toLowerCase()}`}
-                            passHref
-                        >
-                            <div className="border rounded shadow p-4 block cursor-pointer">
-                                <div className="relative w-full h-48">
-                                    {product.backgroundUrl && (
+                        <div key={index} className="border rounded shadow p-4 block cursor-pointer">
+                            <Link href={`/supplier/products/${session.user.name?.replace(/\s+/g, '-').toLowerCase()}/${product.name.replace(/\s+/g, '-').toLowerCase()}`} passHref>
+                                <div className="block">
+                                    <div className="relative w-full h-48">
+                                        {product.backgroundUrl && (
+                                            <Image
+                                                src={product.backgroundUrl}
+                                                alt="Background"
+                                                fill
+                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                style={{ objectFit: 'cover' }}
+                                            />
+                                        )}
                                         <Image
-                                            src={product.backgroundUrl}
-                                            alt="Background"
+                                            src={product.imageUrl}
+                                            alt={product.name}
                                             fill
                                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                            style={{ objectFit: 'cover' }}
+                                            style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
                                         />
+                                    </div>
+                                    <h2 className="text-xl font-bold mt-4 text-center">{product.name}</h2>
+                                    <p className="mt-2 text-center">{product.description}</p>
+                                    {product.pairing.length > 0 && (
+                                        <div className="mt-2 text-center">
+                                            <h3 className="font-bold">Pairing:</h3>
+                                            <ul>
+                                                {product.pairing.map((pair, index) => (
+                                                    <li key={index}>{pair}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
                                     )}
-                                    <Image
-                                        src={product.imageUrl}
-                                        alt={product.name}
-                                        fill
-                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                        style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
-                                    />
-                                </div>
-                                <h2 className="text-xl font-bold mt-4">{product.name}</h2>
-                                <p className="mt-2">{product.description}</p>
-                                {product.pairing.length > 0 && (
-                                    <div className="mt-2">
-                                        <h3 className="font-bold">Pairing:</h3>
-                                        <ul>
-                                            {product.pairing.map((pair, index) => (
-                                                <li key={index}>{pair}</li>
-                                            ))}
-                                        </ul>
+                                    <div className="mt-2 text-center">
+                                        <h3 className="font-bold">Origin:</h3>
+                                        <p>
+                                            {product.location.city}
+                                            {product.location.state && `, ${product.location.state}`}
+                                            {product.location.country && `, ${product.location.country}`}
+                                        </p>
                                     </div>
-                                )}
-                                <div className="mt-2">
-                                    <h3 className="font-bold">Origin:</h3>
-                                    <p>
-                                        {product.location.city}
-                                        {product.location.state && `, ${product.location.state}`}
-                                        {product.location.country && `, ${product.location.country}`}
-                                    </p>
+                                    {product.taste && product.taste.length > 0 && (
+                                        <div className="mt-2 text-center">
+                                            <h3 className="font-bold">Taste:</h3>
+                                            <ul>
+                                                {product.taste.map((t, index) => (
+                                                    <li key={index}>{t}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
-                                {product.taste && product.taste.length > 0 && (
-                                    <div className="mt-2">
-                                        <h3 className="font-bold">Taste:</h3>
-                                        <ul>
-                                            {product.taste.map((t, index) => (
-                                                <li key={index}>{t}</li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
+                            </Link>
+                            <div className="flex justify-center mt-4">
+                                <Link href={`/supplier/products/${session.user.name?.replace(/\s+/g, '-').toLowerCase()}/${product.name.replace(/\s+/g, '-').toLowerCase()}/edit`} passHref>
+                                    <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Edit</button>
+                                </Link>
                             </div>
-                        </Link>
+                        </div>
                     ))}
                 </div>
             </div>
