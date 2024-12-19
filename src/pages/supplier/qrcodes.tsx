@@ -74,7 +74,7 @@ const QRCodePage = () => {
                             <Link href={`/supplier/products/${session?.user.name?.replace(/\s+/g, '-').toLowerCase()}/${product.name.replace(/\s+/g, '-').toLowerCase()}`} passHref>
                                 <div className="cursor-pointer">
                                     <QRCodeCanvas
-                                        value={`${process.env.NEXTAUTH_URL}/supplier/products/${session?.user.name?.replace(/\s+/g, '-').toLowerCase()}/${product.name.replace(/\s+/g, '-').toLowerCase()}`}
+                                        value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/supplier/products/${session?.user.name?.replace(/\s+/g, '-').toLowerCase()}/${product.name.replace(/\s+/g, '-').toLowerCase()}`}
                                         size={256} // Increase the size of the QR code
                                         level="H"
                                         includeMargin={true}
