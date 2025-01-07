@@ -58,7 +58,8 @@ const AddProductPage = () => {
             const existingProductKeys = await listFilesInS3(`suppliers/${formattedSupplierName}/products/`);
             const existingProductNames = existingProductKeys
                 .filter((key): key is string => key !== undefined)
-                .map((key: string) => key.split('/').pop()?.replace('.json', ''))
+                .map((key: string | undefined) => key?.split('/').pop()?.replace('.json', ''))
+                .filter((key): key is string => key !== undefined)
                 .map(normalizeName);
             if (existingProductNames.includes(formattedProductName)) {
                 setError('A product with this name already exists. Please choose a different name.');
