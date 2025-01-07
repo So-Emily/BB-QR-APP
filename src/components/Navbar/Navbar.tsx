@@ -22,6 +22,11 @@ const Navbar = () => {
                             </Link>
                         </li>
                         <li>
+                            <Link href="/supplier/portfolio" passHref>
+                                <span role="link" className={styles.navItem}>Portfolio</span>
+                            </Link>
+                        </li>
+                        <li>
                             <Link href="/supplier/qrcodes" passHref>
                                 <span role="link" className={styles.navItem}>QR Codes</span>
                             </Link>
@@ -29,6 +34,11 @@ const Navbar = () => {
                         <li>
                             <Link href="/supplier/add-product" passHref>
                                 <span role="link" className={styles.navItem}>Add Product</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/supplier/test" passHref>
+                                <span role="link" className={styles.navItem}>test</span>
                             </Link>
                         </li>
                     </>

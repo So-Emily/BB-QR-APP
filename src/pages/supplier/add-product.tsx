@@ -27,55 +27,89 @@ const AddProductPage = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+    
+        // Validate required fields
+        if (!name || !description) {
+            setError('Name and description are required');
+            return;
+        }
+    
         if (!image) {
             setError('Please upload an image');
             return;
         }
-
-        if (!session || !session.user || !session.user.name) {
+    
+        if (!session || !session.user || !session.user.name || !session.user.id) {
             setError('User not authenticated');
             return;
         }
-
-        const supplierName = session.user.name; // Use the logged-in user's name
+    
+        const supplierName = session.user.name;
         const formattedSupplierName = supplierName.replace(/\s+/g, '-').toLowerCase();
         const formattedProductName = name.replace(/\s+/g, '-').toLowerCase();
         const productKey = `suppliers/${formattedSupplierName}/products/${formattedProductName}`;
-
-        console.log('productKey:', productKey);
-        console.log('image.name:', image.name);
-
+    
         try {
+            console.log('Starting S3 Uploads...');
+            // Upload image to S3
             const imageBuffer = await image.arrayBuffer();
             const imageUpload = await uploadFileToS3(`${productKey}/${image.name}`, Buffer.from(imageBuffer), image.type);
-
+    
             let backgroundUrl = '';
             if (background) {
                 const backgroundBuffer = await background.arrayBuffer();
                 const backgroundUpload = await uploadFileToS3(`${productKey}/backgrounds/${background.name}`, Buffer.from(backgroundBuffer), background.type);
                 backgroundUrl = backgroundUpload.Location || '';
             }
-
+    
+            console.log('S3 Uploads Completed.');
+    
+            // Prepare product information for JSON upload to S3
             const productInfo = {
                 name,
                 description,
-                pairing: pairing.filter(pair => pair !== ''), // Filter out empty pairings
-                taste: taste.filter(t => t !== ''), // Filter out empty taste inputs
+                pairing: pairing.filter(pair => pair !== ''),
+                taste: taste.filter(t => t !== ''),
                 location,
                 imageUrl: imageUpload.Location,
                 backgroundUrl,
                 styles,
                 backsideInfo,
             };
-
+    
+            console.log('Uploading JSON to S3...');
             await uploadFileToS3(`${productKey}/product.json`, JSON.stringify(productInfo), 'application/json');
-
+            console.log('JSON Uploaded to S3.');
+    
+            console.log('Saving Product to MongoDB...');
+            // Save product to MongoDB
+            const dbProductInfo = {
+                userId: session.user.id,
+                name,
+            };
+    
+            const response = await fetch('/api/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dbProductInfo),
+            });
+    
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('MongoDB API Error:', errorText);
+                throw new Error('Failed to save product to database');
+            }
+    
+            const result = await response.json();
+            console.log('Product saved to MongoDB:', result);
+    
             router.push('/supplier/dashboard');
         } catch (err) {
-            setError('Failed to upload product: ' + err);
+            console.error('Failed to add product:', err);
+            setError('Failed to add product. Please try again.');
         }
     };
+    
 
     return (
         <div>

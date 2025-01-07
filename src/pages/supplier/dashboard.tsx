@@ -69,4 +69,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
 };
 
+console.log("Rendering Supplier Dashboard Page");
+
+
 export default SupplierDashboard;

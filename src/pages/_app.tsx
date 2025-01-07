@@ -16,6 +16,8 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
                 '/supplier/add-product',
                 '/supplier/view-products',
                 '/supplier/qrcodes',
+                '/supplier/portfolio',
+                '/supplier/test',
             ];
             const isSupplierProductPage = router.pathname.startsWith('/supplier/products/');
             if (session.user.role === 'supplier' && !supplierPaths.includes(router.pathname) && !isSupplierProductPage) {

@@ -25,6 +25,9 @@ const ViewProductsPage = () => {
                 const productPromises = jsonKeys.map(async (key: string) => {
                     try {
                         const productData = await fetchProductDataFromS3(key);
+
+                        // Track scan count for the product
+                        await trackScanCount(productData.id); // Assuming productData includes an `id` field from MongoDB
                         return productData;
                     } catch (err) {
                         console.error(`Failed to fetch product data for key ${key}:`, err);
@@ -35,6 +38,28 @@ const ViewProductsPage = () => {
                 setProducts(products);
             } catch (err) {
                 setError('Failed to fetch products: ' + err);
+            }
+        };
+
+        const trackScanCount = async (productId: string) => {
+            if (!productId) {
+                console.error('Product ID is missing. Cannot track scan count.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/scans/${productId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+
+                if (!response.ok) {
+                    console.error(`Failed to track scan count for product ${productId}`);
+                } else {
+                    console.log(`Scan count tracked for product ${productId}`);
+                }
+            } catch (error) {
+                console.error(`Error tracking scan count for product ${productId}:`, error);
             }
         };
 
