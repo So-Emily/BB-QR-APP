@@ -20,7 +20,7 @@ const AddProductPage = () => {
     const [imageName, setImageName] = useState(''); // State variable for image name
     const [backgroundName, setBackgroundName] = useState(''); // State variable for background name
     const [showSuccessModal, setShowSuccessModal] = useState(false); // State for success modal
-    // Color Settings
+    // Color Wheel
     const [showTextColorPicker, setShowTextColorPicker] = useState(false);
     const [showBodyColorPicker, setShowBodyColorPicker] = useState(false);
     const [showBorderColorPicker, setShowBorderColorPicker] = useState(false);
