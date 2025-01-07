@@ -10,8 +10,8 @@ const s3Client = new S3Client({
     },
 });
 
-// console.log('AWS_REGION:', process.env.AWS_REGION); 
-// console.log('AWS_S3_BUCKET_NAME:', process.env.AWS_S3_BUCKET_NAME); 
+console.log('AWS_REGION:', process.env.AWS_REGION); 
+console.log('AWS_S3_BUCKET_NAME:', process.env.AWS_S3_BUCKET_NAME); 
 
 export async function uploadFileToS3(key: string, body: Buffer | string, contentType: string) {
     const params = {

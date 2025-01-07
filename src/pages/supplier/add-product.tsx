@@ -20,7 +20,7 @@ const AddProductPage = () => {
     const [imageName, setImageName] = useState(''); // State variable for image name
     const [backgroundName, setBackgroundName] = useState(''); // State variable for background name
     const [showSuccessModal, setShowSuccessModal] = useState(false); // State for success modal
-    // Color Wheel
+    // Color Settings
     const [showTextColorPicker, setShowTextColorPicker] = useState(false);
     const [showBodyColorPicker, setShowBodyColorPicker] = useState(false);
     const [showBorderColorPicker, setShowBorderColorPicker] = useState(false);
@@ -38,17 +38,22 @@ const AddProductPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!name || !description) {
+            setError('Name and description are required');
+            return;
+        }
+
         if (!image) {
             setError('Please upload an image');
             return;
         }
 
-        if (!session || !session.user || !session.user.name) {
+        if (!session || !session.user || !session.user.name || !session.user.id) {
             setError('User not authenticated');
             return;
         }
 
-        const supplierName = session.user.name; // Use the logged-in user's name
+        const supplierName = session.user.name;
         const formattedSupplierName = normalizeName(supplierName);
         const formattedProductName = normalizeName(name);
         const productKey = `suppliers/${formattedSupplierName}/products/${formattedProductName}`;
@@ -93,6 +98,7 @@ const AddProductPage = () => {
                 imageUrl: imageUpload.Location,
                 backgroundUrl,
                 styles,
+                backsideInfo,
             };
 
             await uploadFileToS3(`${productKey}/product.json`, JSON.stringify(productInfo), 'application/json');
@@ -319,7 +325,7 @@ const AddProductPage = () => {
 
             {showSuccessModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-white text-black p-6 rounded shadow-lg">
+                    <div className="bg-white p-6 rounded shadow-lg">
                         <h2 className="text-xl font-bold mb-4">Product Added Successfully!</h2>
                         <p className="mb-4">Would you like to add another product or go to your dashboard?</p>
                         <div className="flex space-x-4">
