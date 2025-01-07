@@ -133,28 +133,4 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     }
 };
 
-
-const getProductIdFromMongo = async (productName: string, supplierName: string): Promise<string | null> => {
-    try {
-        console.log('Request Payload:', { name: productName, supplierName });
-
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/by-name`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: productName, supplierName }),
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch product ID: ${response.statusText}`);
-        }
-
-        const product = await response.json();
-        return product._id || null;
-    } catch (error) {
-        console.error('Error fetching product ID from MongoDB:', error);
-        return null;
-    }
-};
-
-
 export default ProductPage;

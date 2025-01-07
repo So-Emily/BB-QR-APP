@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { uploadFileToS3 } from '@/lib/s3';
 import Navbar from '@/components/Navbar/Navbar';
 import { useSession } from 'next-auth/react';
+import { listFilesInS3 } from '@/lib/s3';
 
 const AddProductPage = () => {
     const [activeTab, setActiveTab] = useState('front');
@@ -50,7 +51,15 @@ const AddProductPage = () => {
         const productKey = `suppliers/${formattedSupplierName}/products/${formattedProductName}`;
     
         try {
-            console.log('Starting S3 Uploads...');
+            // Check if the product already exists in S3
+            const existingFiles = await listFilesInS3(`suppliers/${formattedSupplierName}/products/${formattedProductName}`);
+            if (existingFiles.length > 0) {
+                setError('A product with this name already exists. Please choose a different name.');
+                return;
+            }
+    
+            console.log('Product does not exist. Proceeding with upload.');
+
             // Upload image to S3
             const imageBuffer = await image.arrayBuffer();
             const imageUpload = await uploadFileToS3(`${productKey}/${image.name}`, Buffer.from(imageBuffer), image.type);

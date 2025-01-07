@@ -1,75 +1,162 @@
-// src/pages/supplier/dashboard.tsx
-import Navbar from '@/components/Navbar/Navbar';
-import { getSession } from 'next-auth/react';
-import { GetServerSideProps } from 'next';
-import styles from './Dashboard.module.css';
+import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import Navbar from '@/components/Navbar/Navbar'; 
+import { Bar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 
-// import Link from 'next/link';
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const SupplierDashboard = ({ username }: { username: string }) => {
-    const capitalizeFirstLetter = (string: string) => {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    };
+interface ChartData {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: number[];
+    backgroundColor: string;
+    borderColor: string;
+    borderWidth: number;
+  }[];
+}
 
-    return (
-        <div>
-            <Navbar />
-            <main>
-                <h1 className={styles.title}>Welcome, {capitalizeFirstLetter(username)}!</h1>
+interface ProductData {
+  name: string;
+  scanCount: number;
+}
 
-                {/* Centered Add Product Button */}
-                {/* <div className="flex justify-center mt-5">
-                    <Link href="/supplier/add-product">
-                        <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                            Add Product
-                        </button>
-                    </Link>
-                </div> */}
-            </main>
-        </div>
-    );
-};
+const Portfolio = () => {
+  const { status } = useSession();
+  const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<ChartData | null>(null);
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-    const session = await getSession(context);
-
-    if (!session) {
-        return {
-            redirect: {
-                destination: '/auth/signin',
-                permanent: false,
-            },
-        };
+  useEffect(() => {
+    if (status === "authenticated" || status === "unauthenticated") {
+      setLoading(false);
     }
+  }, [status]);
 
-    try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user`, {
-            headers: {
-                cookie: context.req.headers.cookie || '',
-            },
-        });
+  useEffect(() => {
+    if (status === "authenticated") {
+      // Fetch scan count data for the chart
+      const fetchChartData = async () => {
+        try {
+          const response = await fetch('/api/products/scan-data'); // Replace with your API endpoint
+          if (!response.ok) {
+            throw new Error('Failed to fetch chart data');
+          }
+          const data: ProductData[] = await response.json(); // Explicitly define the data structure
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch user data');
+          // Transform data for Chart.js
+          const labels = data.map((item) => item.name);
+          const counts = data.map((item) => item.scanCount);
+
+          setChartData({
+            labels,
+            datasets: [
+              {
+                label: 'Scan Count',
+                data: counts,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+              },
+            ],
+          });
+        } catch (error) {
+          console.error('Error fetching chart data:', error);
         }
+      };
 
-        const data = await response.json();
-
-        return {
-            props: {
-                username: data.name,
-            },
-        };
-    } catch (error) {
-        return {
-            props: {
-                username: '' + error,
-            },
-        };
+      fetchChartData();
     }
+  }, [status]);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (status === "unauthenticated") {
+    return <div className="min-h-screen flex items-center justify-center">Unauthorized Access</div>;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      {/* Header - Using Existing Navbar */}
+      <Navbar />
+
+      {/* Main Content */}
+      <main className="p-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
+        {/* Left Panel */}
+        <section className="bg-white shadow-md rounded-lg p-6 w-full md:w-1/3">
+          <div className="flex flex-col items-center">
+            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+              {/* Placeholder for logo */}
+              <span className="text-red-500 text-3xl font-bold">A</span>
+            </div>
+            <h2 className="text-lg font-bold mb-4">Breakthru Beverage</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
+              <span className="text-sm">Top Item</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
+              <span className="text-sm">Top Store</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
+              <span className="text-sm">???????</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
+              <span className="text-sm">???????</span>
+            </div>
+          </div>
+        </section>
+
+        {/* Right Panel */}
+        <section className="bg-white shadow-md rounded-lg p-6 flex-1">
+          <div className="flex justify-between mb-4">
+            <select className="border border-gray-300 rounded px-4 py-2">
+              <option>Account</option>
+              <option>Woodlands 3197</option>
+            </select>
+            <select className="border border-gray-300 rounded px-4 py-2">
+              <option>Category</option>
+              <option>Breakthru Top 5</option>
+            </select>
+          </div>
+          <div className="h-64 bg-gray-200 flex items-center justify-center rounded">
+            {chartData ? (
+              <Bar
+                data={chartData}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: {
+                      display: true,
+                      position: 'top',
+                    },
+                  },
+                }}
+              />
+            ) : (
+              <span className="text-gray-500">Loading Chart...</span>
+            )}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
 };
 
-console.log("Rendering Supplier Dashboard Page");
+console.log("Rendering Supplier Portfolio Page");
 
-
-export default SupplierDashboard;
+export default Portfolio;
