@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { uploadFileToS3 } from '@/lib/s3';
+import { uploadFileToS3, listFilesInS3 } from '@/lib/s3';
 import Navbar from '@/components/Navbar/Navbar';
 import { useSession } from 'next-auth/react';
+import { SketchPicker } from 'react-color';
 
 const AddProductPage = () => {
     const [activeTab, setActiveTab] = useState('front');
@@ -13,17 +14,26 @@ const AddProductPage = () => {
     const [location, setLocation] = useState({ city: '', state: '', country: '' });
     const [image, setImage] = useState<File | null>(null);
     const [background, setBackground] = useState<File | null>(null);
-    const [styles, setStyles] = useState({ textColor: '', bodyColor: '', borderColor: '' });
+    const [styles, setStyles] = useState({ textColor: '#000000', bodyColor: '#ffffff', borderColor: '#000000' });
     const [backsideInfo, setBacksideInfo] = useState({ additionalInfo: '' });
     const [error, setError] = useState('');
     const [imageName, setImageName] = useState(''); // State variable for image name
     const [backgroundName, setBackgroundName] = useState(''); // State variable for background name
+    const [showSuccessModal, setShowSuccessModal] = useState(false); // State for success modal
+    // Color Settings
+    const [showTextColorPicker, setShowTextColorPicker] = useState(false);
+    const [showBodyColorPicker, setShowBodyColorPicker] = useState(false);
+    const [showBorderColorPicker, setShowBorderColorPicker] = useState(false);
     const router = useRouter();
     const { data: session } = useSession();
 
     useEffect(() => {
         console.log('AddProductPage mounted');
     }, []);
+
+    const normalizeName = (name: string) => {
+        return name.replace(/\s+/g, '-').toLowerCase();
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,9 +49,25 @@ const AddProductPage = () => {
         }
 
         const supplierName = session.user.name; // Use the logged-in user's name
-        const formattedSupplierName = supplierName.replace(/\s+/g, '-').toLowerCase();
-        const formattedProductName = name.replace(/\s+/g, '-').toLowerCase();
+        const formattedSupplierName = normalizeName(supplierName);
+        const formattedProductName = normalizeName(name);
         const productKey = `suppliers/${formattedSupplierName}/products/${formattedProductName}`;
+
+        // Check if a product with the same name already exists
+        try {
+            const existingProductKeys = await listFilesInS3(`suppliers/${formattedSupplierName}/products/`);
+            const existingProductNames = existingProductKeys
+                .filter((key): key is string => key !== undefined)
+                .map((key: string) => key.split('/').pop()?.replace('.json', ''))
+                .map(normalizeName);
+            if (existingProductNames.includes(formattedProductName)) {
+                setError('A product with this name already exists. Please choose a different name.');
+                return;
+            }
+        } catch (err) {
+            setError('Failed to check existing products: ' + err);
+            return;
+        }
 
         console.log('productKey:', productKey);
         console.log('image.name:', image.name);
@@ -66,15 +92,42 @@ const AddProductPage = () => {
                 imageUrl: imageUpload.Location,
                 backgroundUrl,
                 styles,
-                backsideInfo,
             };
 
             await uploadFileToS3(`${productKey}/product.json`, JSON.stringify(productInfo), 'application/json');
 
-            router.push('/supplier/dashboard');
+            // Save backside info to a separate JSON file
+            if (backsideInfo.additionalInfo.trim()) {
+                const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
+                await uploadFileToS3(backsideInfoKey, JSON.stringify(backsideInfo), 'application/json');
+            }
+
+            // Show success modal
+            setShowSuccessModal(true);
         } catch (err) {
             setError('Failed to upload product: ' + err);
         }
+    };
+
+    const handleAddAnotherProduct = () => {
+        // Reset form fields
+        setName('');
+        setDescription('');
+        setPairing(['', '', '']);
+        setTaste(['', '', '']);
+        setLocation({ city: '', state: '', country: '' });
+        setImage(null);
+        setBackground(null);
+        setStyles({ textColor: '#000000', bodyColor: '#ffffff', borderColor: '#000000' });
+        setBacksideInfo({ additionalInfo: '' });
+        setError('');
+        setImageName('');
+        setBackgroundName('');
+        setShowSuccessModal(false);
+    };
+
+    const handleGoToDashboard = () => {
+        router.push('/supplier/dashboard');
     };
 
     return (
@@ -210,27 +263,39 @@ const AddProductPage = () => {
                             </div>
                             <label className="block">Card Styles</label>
                             <div className="flex space-x-4">
-                                <input
-                                    type="text"
-                                    placeholder="Text Color"
-                                    value={styles.textColor}
-                                    onChange={(e) => setStyles({ ...styles, textColor: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded text-black"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Body Color"
-                                    value={styles.bodyColor}
-                                    onChange={(e) => setStyles({ ...styles, bodyColor: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded text-black"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Border Color"
-                                    value={styles.borderColor}
-                                    onChange={(e) => setStyles({ ...styles, borderColor: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded text-black"
-                                />
+                                <div>
+                                    <button type="button" className="px-4 py-2 bg-gray-200 text-black rounded" onClick={() => setShowTextColorPicker(!showTextColorPicker)}>
+                                        Text Color
+                                    </button>
+                                    {showTextColorPicker && (
+                                        <SketchPicker
+                                            color={styles.textColor}
+                                            onChangeComplete={(color) => setStyles({ ...styles, textColor: color.hex })}
+                                        />
+                                    )}
+                                </div>
+                                <div>
+                                    <button type="button" className="px-4 py-2 bg-gray-200 text-black rounded" onClick={() => setShowBodyColorPicker(!showBodyColorPicker)}>
+                                        Body Color
+                                    </button>
+                                    {showBodyColorPicker && (
+                                        <SketchPicker
+                                            color={styles.bodyColor}
+                                            onChangeComplete={(color) => setStyles({ ...styles, bodyColor: color.hex })}
+                                        />
+                                    )}
+                                </div>
+                                <div>
+                                    <button type="button" className="px-4 py-2 bg-gray-200 text-black rounded" onClick={() => setShowBorderColorPicker(!showBorderColorPicker)}>
+                                        Border Color
+                                    </button>
+                                    {showBorderColorPicker && (
+                                        <SketchPicker
+                                            color={styles.borderColor}
+                                            onChangeComplete={(color) => setStyles({ ...styles, borderColor: color.hex })}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </>
                     )}
@@ -250,6 +315,29 @@ const AddProductPage = () => {
                     </button>
                 </form>
             </div>
+
+            {showSuccessModal && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white text-black p-6 rounded shadow-lg">
+                        <h2 className="text-xl font-bold mb-4">Product Added Successfully!</h2>
+                        <p className="mb-4">Would you like to add another product or go to your dashboard?</p>
+                        <div className="flex space-x-4">
+                            <button
+                                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                onClick={handleAddAnotherProduct}
+                            >
+                                Add Another Product
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                                onClick={handleGoToDashboard}
+                            >
+                                Go to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
