@@ -1,9 +1,12 @@
+// src/pages/supplier/products/[supplierName]/[productName]/edit.tsx
 import { GetServerSideProps } from 'next';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar/Navbar';
 import { fetchProductDataFromS3, uploadFileToS3 } from '@/lib/s3';
 import { Product } from '@/types';
+import { SketchPicker } from 'react-color';
+import { useSession } from 'next-auth/react';
 
 interface EditProductPageProps {
     product: Product;
@@ -19,9 +22,36 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
     const [image, setImage] = useState<File | null>(null);
     const [background, setBackground] = useState<File | null>(null);
     const [styles, setStyles] = useState(product.styles);
-    const [backsideInfo, setBacksideInfo] = useState(product.backsideInfo);
+    const [backsideInfo, setBacksideInfo] = useState({ additionalInfo: '' });
     const [error, setError] = useState('');
+    const [showTextColorPicker, setShowTextColorPicker] = useState(false);
+    const [showBodyColorPicker, setShowBodyColorPicker] = useState(false);
+    const [showBorderColorPicker, setShowBorderColorPicker] = useState(false);
     const router = useRouter();
+    const { data: session } = useSession();
+
+    useEffect(() => {
+        const fetchBacksideInfo = async () => {
+            if (!session || !session.user || !session.user.name) {
+                setError('User not authenticated');
+                return;
+            }
+
+            const supplierName = session.user.name.replace(/\s+/g, '-').toLowerCase();
+            const backsideInfoKey = `suppliers/${supplierName}/backsideInfo.json`;
+
+            try {
+                const fetchedBacksideInfo = await fetchProductDataFromS3(backsideInfoKey);
+                setBacksideInfo(fetchedBacksideInfo);
+            } catch (err) {
+                console.error('Failed to fetch backside info:', err);
+            }
+        };
+
+        if (session) {
+            fetchBacksideInfo();
+        }
+    }, [session]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -55,10 +85,15 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                 imageUrl,
                 backgroundUrl,
                 styles,
-                backsideInfo,
             };
 
             await uploadFileToS3(`${productKey}/product.json`, JSON.stringify(updatedProductInfo), 'application/json');
+
+            // Save backside info to a separate JSON file
+            if (backsideInfo.additionalInfo.trim()) {
+                const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
+                await uploadFileToS3(backsideInfoKey, JSON.stringify(backsideInfo), 'application/json');
+            }
 
             router.push('/supplier/view-products');
         } catch (err) {
@@ -194,27 +229,39 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                             </div>
                             <label className="block">Card Styles</label>
                             <div className="flex space-x-4">
-                                <input
-                                    type="text"
-                                    placeholder="Text Color"
-                                    value={styles.textColor}
-                                    onChange={(e) => setStyles({ ...styles, textColor: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded text-black"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Body Color"
-                                    value={styles.bodyColor}
-                                    onChange={(e) => setStyles({ ...styles, bodyColor: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded text-black"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Border Color"
-                                    value={styles.borderColor}
-                                    onChange={(e) => setStyles({ ...styles, borderColor: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded text-black"
-                                />
+                                <div>
+                                    <button type="button" className="px-4 py-2 bg-gray-200 text-black rounded" onClick={() => setShowTextColorPicker(!showTextColorPicker)}>
+                                        Text Color
+                                    </button>
+                                    {showTextColorPicker && (
+                                        <SketchPicker
+                                            color={styles.textColor}
+                                            onChangeComplete={(color) => setStyles({ ...styles, textColor: color.hex })}
+                                        />
+                                    )}
+                                </div>
+                                <div>
+                                    <button type="button" className="px-4 py-2 bg-gray-200 text-black rounded" onClick={() => setShowBodyColorPicker(!showBodyColorPicker)}>
+                                        Body Color
+                                    </button>
+                                    {showBodyColorPicker && (
+                                        <SketchPicker
+                                            color={styles.bodyColor}
+                                            onChangeComplete={(color) => setStyles({ ...styles, bodyColor: color.hex })}
+                                        />
+                                    )}
+                                </div>
+                                <div>
+                                    <button type="button" className="px-4 py-2 bg-gray-200 text-black rounded" onClick={() => setShowBorderColorPicker(!showBorderColorPicker)}>
+                                        Border Color
+                                    </button>
+                                    {showBorderColorPicker && (
+                                        <SketchPicker
+                                            color={styles.borderColor}
+                                            onChangeComplete={(color) => setStyles({ ...styles, borderColor: color.hex })}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </>
                     )}
