@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { uploadFileToS3, listFilesInS3 } from '@/lib/s3';
+import { uploadFileToS3 } from '@/lib/s3'; // removed , listFilesInS3
 import Navbar from '@/components/Navbar/Navbar';
 import { useSession } from 'next-auth/react';
 import { SketchPicker } from 'react-color';
@@ -10,17 +10,17 @@ const AddProductPage = () => {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [pairing, setPairing] = useState(['', '', '']);
-    const [taste, setTaste] = useState(['', '', '']); // State for taste inputs
+    const [taste, setTaste] = useState(['', '', '']); 
     const [location, setLocation] = useState({ city: '', state: '', country: '' });
     const [image, setImage] = useState<File | null>(null);
     const [background, setBackground] = useState<File | null>(null);
     const [styles, setStyles] = useState({ textColor: '#000000', bodyColor: '#ffffff', borderColor: '#000000' });
     const [backsideInfo, setBacksideInfo] = useState({ additionalInfo: '' });
     const [error, setError] = useState('');
-    const [imageName, setImageName] = useState(''); // State variable for image name
-    const [backgroundName, setBackgroundName] = useState(''); // State variable for background name
-    const [showSuccessModal, setShowSuccessModal] = useState(false); // State for success modal
-    // Color Settings
+    const [imageName, setImageName] = useState(''); 
+    const [backgroundName, setBackgroundName] = useState(''); 
+    const [showSuccessModal, setShowSuccessModal] = useState(false); 
+    // Color Wheel
     const [showTextColorPicker, setShowTextColorPicker] = useState(false);
     const [showBodyColorPicker, setShowBodyColorPicker] = useState(false);
     const [showBorderColorPicker, setShowBorderColorPicker] = useState(false);
@@ -31,6 +31,7 @@ const AddProductPage = () => {
         console.log('AddProductPage mounted');
     }, []);
 
+    // Normalize the name for the S3 key
     const normalizeName = (name: string) => {
         return name.replace(/\s+/g, '-').toLowerCase();
     };
@@ -38,42 +39,20 @@ const AddProductPage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!name || !description) {
-            setError('Name and description are required');
-            return;
-        }
-
         if (!image) {
             setError('Please upload an image');
             return;
         }
 
-        if (!session || !session.user || !session.user.name || !session.user.id) {
+        if (!session || !session.user || !session.user.name) {
             setError('User not authenticated');
             return;
         }
 
-        const supplierName = session.user.name;
+        const supplierName = session.user.name; // Use the logged-in user's name
         const formattedSupplierName = normalizeName(supplierName);
         const formattedProductName = normalizeName(name);
         const productKey = `suppliers/${formattedSupplierName}/products/${formattedProductName}`;
-
-        // Check if a product with the same name already exists
-        try {
-            const existingProductKeys = await listFilesInS3(`suppliers/${formattedSupplierName}/products/`);
-            const existingProductNames = existingProductKeys
-                .filter((key): key is string => key !== undefined)
-                .map((key: string | undefined) => key?.split('/').pop()?.replace('.json', ''))
-                .filter((key): key is string => key !== undefined)
-                .map(normalizeName);
-            if (existingProductNames.includes(formattedProductName)) {
-                setError('A product with this name already exists. Please choose a different name.');
-                return;
-            }
-        } catch (err) {
-            setError('Failed to check existing products: ' + err);
-            return;
-        }
 
         console.log('productKey:', productKey);
         console.log('image.name:', image.name);
@@ -98,7 +77,6 @@ const AddProductPage = () => {
                 imageUrl: imageUpload.Location,
                 backgroundUrl,
                 styles,
-                backsideInfo,
             };
 
             await uploadFileToS3(`${productKey}/product.json`, JSON.stringify(productInfo), 'application/json');
@@ -325,7 +303,7 @@ const AddProductPage = () => {
 
             {showSuccessModal && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-white p-6 rounded shadow-lg">
+                    <div className="bg-white text-black p-6 rounded shadow-lg">
                         <h2 className="text-xl font-bold mb-4">Product Added Successfully!</h2>
                         <p className="mb-4">Would you like to add another product or go to your dashboard?</p>
                         <div className="flex space-x-4">
