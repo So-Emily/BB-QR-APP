@@ -13,11 +13,11 @@ const ScanChart = ({ userId }: { userId: string }) => {
     useEffect(() => {
         const fetchScanData = async () => {
             try {
-                const response = await fetch(`/api/products/scan-data?userId=${userId}`);
+                const response = await fetch(`/api/scans/fetch-scans?userId=${userId}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch scan data');
                 }
-                const data = await response.json();
+                const data: ScanData[] = await response.json();
                 setScanData(data);
             } catch (error) {
                 console.error('Error fetching scan data:', error);
