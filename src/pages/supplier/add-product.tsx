@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { uploadFileToS3 } from '@/lib/s3';
+import { uploadFileToS3, listFilesInS3 } from '@/lib/s3';
 import Navbar from '@/components/Navbar/Navbar';
 import { useSession } from 'next-auth/react';
-import { listFilesInS3 } from '@/lib/s3';
+import { SketchPicker } from 'react-color';
 
 const AddProductPage = () => {
     const [activeTab, setActiveTab] = useState('front');
@@ -14,11 +14,16 @@ const AddProductPage = () => {
     const [location, setLocation] = useState({ city: '', state: '', country: '' });
     const [image, setImage] = useState<File | null>(null);
     const [background, setBackground] = useState<File | null>(null);
-    const [styles, setStyles] = useState({ textColor: '', bodyColor: '', borderColor: '' });
+    const [styles, setStyles] = useState({ textColor: '#000000', bodyColor: '#ffffff', borderColor: '#000000' });
     const [backsideInfo, setBacksideInfo] = useState({ additionalInfo: '' });
     const [error, setError] = useState('');
     const [imageName, setImageName] = useState(''); // State variable for image name
     const [backgroundName, setBackgroundName] = useState(''); // State variable for background name
+    const [showSuccessModal, setShowSuccessModal] = useState(false); // State for success modal
+    // Color Settings
+    const [showTextColorPicker, setShowTextColorPicker] = useState(false);
+    const [showBodyColorPicker, setShowBodyColorPicker] = useState(false);
+    const [showBorderColorPicker, setShowBorderColorPicker] = useState(false);
     const router = useRouter();
     const { data: session } = useSession();
 
@@ -26,99 +31,111 @@ const AddProductPage = () => {
         console.log('AddProductPage mounted');
     }, []);
 
+    const normalizeName = (name: string) => {
+        return name.replace(/\s+/g, '-').toLowerCase();
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-    
-        // Validate required fields
+
         if (!name || !description) {
             setError('Name and description are required');
             return;
         }
-    
+
         if (!image) {
             setError('Please upload an image');
             return;
         }
-    
+
         if (!session || !session.user || !session.user.name || !session.user.id) {
             setError('User not authenticated');
             return;
         }
-    
+
         const supplierName = session.user.name;
-        const formattedSupplierName = supplierName.replace(/\s+/g, '-').toLowerCase();
-        const formattedProductName = name.replace(/\s+/g, '-').toLowerCase();
+        const formattedSupplierName = normalizeName(supplierName);
+        const formattedProductName = normalizeName(name);
         const productKey = `suppliers/${formattedSupplierName}/products/${formattedProductName}`;
-    
+
+        // Check if a product with the same name already exists
         try {
-            // Check if the product already exists in S3
-            const existingFiles = await listFilesInS3(`suppliers/${formattedSupplierName}/products/${formattedProductName}`);
-            if (existingFiles.length > 0) {
+            const existingProductKeys = await listFilesInS3(`suppliers/${formattedSupplierName}/products/`);
+            const existingProductNames = existingProductKeys
+                .filter((key): key is string => key !== undefined)
+                .map((key: string | undefined) => key?.split('/').pop()?.replace('.json', ''))
+                .filter((key): key is string => key !== undefined)
+                .map(normalizeName);
+            if (existingProductNames.includes(formattedProductName)) {
                 setError('A product with this name already exists. Please choose a different name.');
                 return;
             }
-    
-            console.log('Product does not exist. Proceeding with upload.');
+        } catch (err) {
+            setError('Failed to check existing products: ' + err);
+            return;
+        }
 
-            // Upload image to S3
+        console.log('productKey:', productKey);
+        console.log('image.name:', image.name);
+
+        try {
             const imageBuffer = await image.arrayBuffer();
             const imageUpload = await uploadFileToS3(`${productKey}/${image.name}`, Buffer.from(imageBuffer), image.type);
-    
+
             let backgroundUrl = '';
             if (background) {
                 const backgroundBuffer = await background.arrayBuffer();
                 const backgroundUpload = await uploadFileToS3(`${productKey}/backgrounds/${background.name}`, Buffer.from(backgroundBuffer), background.type);
                 backgroundUrl = backgroundUpload.Location || '';
             }
-    
-            console.log('S3 Uploads Completed.');
-    
-            // Prepare product information for JSON upload to S3
+
             const productInfo = {
                 name,
                 description,
-                pairing: pairing.filter(pair => pair !== ''),
-                taste: taste.filter(t => t !== ''),
+                pairing: pairing.filter(pair => pair !== ''), // Filter out empty pairings
+                taste: taste.filter(t => t !== ''), // Filter out empty taste inputs
                 location,
                 imageUrl: imageUpload.Location,
                 backgroundUrl,
                 styles,
                 backsideInfo,
             };
-    
-            console.log('Uploading JSON to S3...');
+
             await uploadFileToS3(`${productKey}/product.json`, JSON.stringify(productInfo), 'application/json');
-            console.log('JSON Uploaded to S3.');
-    
-            console.log('Saving Product to MongoDB...');
-            // Save product to MongoDB
-            const dbProductInfo = {
-                userId: session.user.id,
-                name,
-            };
-    
-            const response = await fetch('/api/products', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(dbProductInfo),
-            });
-    
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('MongoDB API Error:', errorText);
-                throw new Error('Failed to save product to database');
+
+            // Save backside info to a separate JSON file
+            if (backsideInfo.additionalInfo.trim()) {
+                const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
+                await uploadFileToS3(backsideInfoKey, JSON.stringify(backsideInfo), 'application/json');
             }
-    
-            const result = await response.json();
-            console.log('Product saved to MongoDB:', result);
-    
-            router.push('/supplier/dashboard');
+
+            // Show success modal
+            setShowSuccessModal(true);
         } catch (err) {
-            console.error('Failed to add product:', err);
-            setError('Failed to add product. Please try again.');
+            setError('Failed to upload product: ' + err);
         }
     };
-    
+
+    const handleAddAnotherProduct = () => {
+        // Reset form fields
+        setName('');
+        setDescription('');
+        setPairing(['', '', '']);
+        setTaste(['', '', '']);
+        setLocation({ city: '', state: '', country: '' });
+        setImage(null);
+        setBackground(null);
+        setStyles({ textColor: '#000000', bodyColor: '#ffffff', borderColor: '#000000' });
+        setBacksideInfo({ additionalInfo: '' });
+        setError('');
+        setImageName('');
+        setBackgroundName('');
+        setShowSuccessModal(false);
+    };
+
+    const handleGoToDashboard = () => {
+        router.push('/supplier/dashboard');
+    };
 
     return (
         <div>
@@ -253,27 +270,39 @@ const AddProductPage = () => {
                             </div>
                             <label className="block">Card Styles</label>
                             <div className="flex space-x-4">
-                                <input
-                                    type="text"
-                                    placeholder="Text Color"
-                                    value={styles.textColor}
-                                    onChange={(e) => setStyles({ ...styles, textColor: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded text-black"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Body Color"
-                                    value={styles.bodyColor}
-                                    onChange={(e) => setStyles({ ...styles, bodyColor: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded text-black"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Border Color"
-                                    value={styles.borderColor}
-                                    onChange={(e) => setStyles({ ...styles, borderColor: e.target.value })}
-                                    className="w-full px-4 py-2 border rounded text-black"
-                                />
+                                <div>
+                                    <button type="button" className="px-4 py-2 bg-gray-200 text-black rounded" onClick={() => setShowTextColorPicker(!showTextColorPicker)}>
+                                        Text Color
+                                    </button>
+                                    {showTextColorPicker && (
+                                        <SketchPicker
+                                            color={styles.textColor}
+                                            onChangeComplete={(color) => setStyles({ ...styles, textColor: color.hex })}
+                                        />
+                                    )}
+                                </div>
+                                <div>
+                                    <button type="button" className="px-4 py-2 bg-gray-200 text-black rounded" onClick={() => setShowBodyColorPicker(!showBodyColorPicker)}>
+                                        Body Color
+                                    </button>
+                                    {showBodyColorPicker && (
+                                        <SketchPicker
+                                            color={styles.bodyColor}
+                                            onChangeComplete={(color) => setStyles({ ...styles, bodyColor: color.hex })}
+                                        />
+                                    )}
+                                </div>
+                                <div>
+                                    <button type="button" className="px-4 py-2 bg-gray-200 text-black rounded" onClick={() => setShowBorderColorPicker(!showBorderColorPicker)}>
+                                        Border Color
+                                    </button>
+                                    {showBorderColorPicker && (
+                                        <SketchPicker
+                                            color={styles.borderColor}
+                                            onChangeComplete={(color) => setStyles({ ...styles, borderColor: color.hex })}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         </>
                     )}
@@ -293,6 +322,29 @@ const AddProductPage = () => {
                     </button>
                 </form>
             </div>
+
+            {showSuccessModal && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <div className="bg-white p-6 rounded shadow-lg">
+                        <h2 className="text-xl font-bold mb-4">Product Added Successfully!</h2>
+                        <p className="mb-4">Would you like to add another product or go to your dashboard?</p>
+                        <div className="flex space-x-4">
+                            <button
+                                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                                onClick={handleAddAnotherProduct}
+                            >
+                                Add Another Product
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                                onClick={handleGoToDashboard}
+                            >
+                                Go to Dashboard
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

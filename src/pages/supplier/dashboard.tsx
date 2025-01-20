@@ -13,9 +13,9 @@ const Dashboard = () => {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  if (status === "unauthenticated") {
-    return <div className="min-h-screen flex items-center justify-center">Unauthorized Access</div>;
-  }
+    if (status === "unauthenticated") {
+        return <div className="min-h-screen flex items-center justify-center">Unauthorized Access</div>;
+    }
 
   return (
     <div className="min-h-screen bg-gray-100 text-black">

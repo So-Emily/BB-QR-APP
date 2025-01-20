@@ -1,14 +1,22 @@
+// src/pages/supplier/view-products.tsx
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar/Navbar';
 import { listFilesInS3, fetchProductDataFromS3 } from '@/lib/s3';
-import Image from 'next/image';
-import Link from 'next/link';
 import { Product } from '@/types';
+import Card from '@/components/Card/Card';
+import Link from 'next/link';
+import cardStyles from '@/components/Card/Card.module.css';
+import pageStyles from '@/styles/view-products.module.css'; // Import the new CSS module
+
+const capitalizeWords = (str: string) => {
+    return str.replace(/\b\w/g, char => char.toUpperCase());
+};
 
 const ViewProductsPage = () => {
     const { data: session } = useSession();
     const [products, setProducts] = useState<Product[]>([]);
+    const [backsideInfo, setBacksideInfo] = useState({ additionalInfo: '' });
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -36,6 +44,15 @@ const ViewProductsPage = () => {
                 });
                 const products = (await Promise.all(productPromises)).filter(product => product !== null);
                 setProducts(products);
+
+                // Fetch backside info
+                const backsideInfoKey = `suppliers/${supplierName}/backsideInfo.json`;
+                try {
+                    const fetchedBacksideInfo = await fetchProductDataFromS3(backsideInfoKey);
+                    setBacksideInfo(fetchedBacksideInfo);
+                } catch (err) {
+                    console.error('Failed to fetch backside info:', err);
+                }
             } catch (err) {
                 setError('Failed to fetch products: ' + err);
             }
@@ -70,73 +87,71 @@ const ViewProductsPage = () => {
         return <div>User not authenticated</div>;
     }
 
+    const supplierName = capitalizeWords(session.user.name ?? '');
+
     return (
         <div>
             <Navbar />
             <div className="container mx-auto p-4">
                 <h1 className="text-2xl font-bold mb-4">Your Products</h1>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className={pageStyles.cardContainer}>
                     {products.map((product, index) => (
-                        <div key={index} className="border rounded shadow p-4 block cursor-pointer">
-                            <Link href={`/supplier/products/${session.user.name?.replace(/\s+/g, '-').toLowerCase()}/${product.name.replace(/\s+/g, '-').toLowerCase()}`} passHref>
-                                <div className="block">
-                                    <div className="relative w-full h-48">
-                                        {product.backgroundUrl && (
-                                            <Image
-                                                src={product.backgroundUrl}
-                                                alt="Background"
-                                                fill
-                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                                style={{ objectFit: 'cover' }}
-                                            />
+                        <Card
+                            key={index}
+                            frontContent={
+                                <div className="p-4">
+                                    <h1 className="text-2xl font-bold">{product.name}</h1>
+                                    <p>{product.description}</p>
+                                    <div className={cardStyles.infoRow}>
+                                        {product.pairing.length > 0 && (
+                                            <div className={cardStyles.infoColumn}>
+                                                <strong>Pairing:</strong>
+                                                <div>{product.pairing.join(' ')}</div>
+                                            </div>
                                         )}
-                                        <Image
-                                            src={product.imageUrl}
-                                            alt={product.name}
-                                            fill
-                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                            style={{ objectFit: 'contain', position: 'absolute', top: 0, left: 0 }}
-                                        />
+                                        {product.location && (
+                                            <div className={cardStyles.infoColumn}>
+                                                <strong>Origin:</strong>
+                                                <div>
+                                                    {product.location.city && `${product.location.city}`}
+                                                    {product.location.city && product.location.state && `, `}
+                                                    {product.location.state && `${product.location.state}`}
+                                                    {(product.location.city || product.location.state) && product.location.country && `, `}
+                                                    {product.location.country}
+                                                </div>
+                                            </div>
+                                        )}
+                                        {product.taste.length > 0 && (
+                                            <div className={cardStyles.infoColumn}>
+                                                <strong>Taste:</strong>
+                                                <div>{product.taste.join(' ')}</div>
+                                            </div>
+                                        )}
                                     </div>
-                                    <h2 className="text-xl font-bold mt-4 text-center">{product.name}</h2>
-                                    <p className="mt-2 text-center">{product.description}</p>
-                                    {product.pairing.length > 0 && (
-                                        <div className="mt-2 text-center">
-                                            <h3 className="font-bold">Pairing:</h3>
-                                            <ul>
-                                                {product.pairing.map((pair, index) => (
-                                                    <li key={index}>{pair}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-                                    <div className="mt-2 text-center">
-                                        <h3 className="font-bold">Origin:</h3>
-                                        <p>
-                                            {product.location.city}
-                                            {product.location.state && `, ${product.location.state}`}
-                                            {product.location.country && `, ${product.location.country}`}
-                                        </p>
-                                    </div>
-                                    {product.taste && product.taste.length > 0 && (
-                                        <div className="mt-2 text-center">
-                                            <h3 className="font-bold">Taste:</h3>
-                                            <ul>
-                                                {product.taste.map((t, index) => (
-                                                    <li key={index}>{t}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
                                 </div>
-                            </Link>
-                            <div className="flex justify-center mt-4">
-                                <Link href={`/supplier/products/${session.user.name?.replace(/\s+/g, '-').toLowerCase()}/${product.name.replace(/\s+/g, '-').toLowerCase()}/edit`} passHref>
-                                    <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Edit</button>
-                                </Link>
-                            </div>
-                        </div>
+                            }
+                            backContent={
+                                <div className="p-4">
+                                    <h2 className="text-xl font-bold">Additional Info</h2>
+                                    <p>{backsideInfo.additionalInfo}</p>
+                                </div>
+                            }
+                            backgroundUrl={product.backgroundUrl}
+                            imageUrl={product.imageUrl}
+                            supplierName={supplierName} // Pass formatted supplierName prop
+                            cardStyles={product.styles} // Pass card styles
+                            additionalContent={
+                                <div className="flex justify-between">
+                                    <Link href={`/supplier/products/${session.user.name?.replace(/\s+/g, '-').toLowerCase()}/${product.name.replace(/\s+/g, '-').toLowerCase()}`} passHref>
+                                        <button className={cardStyles.button} onClick={(e) => e.stopPropagation()}>View</button>
+                                    </Link>
+                                    <Link href={`/supplier/products/${session.user.name?.replace(/\s+/g, '-').toLowerCase()}/${product.name.replace(/\s+/g, '-').toLowerCase()}/edit`} passHref>
+                                        <button className={cardStyles.button} onClick={(e) => e.stopPropagation()}>Edit</button>
+                                    </Link>
+                                </div>
+                            }
+                        />
                     ))}
                 </div>
             </div>
