@@ -31,6 +31,11 @@ const Navbar = () => {
                                 <span role="link" className={styles.navItem}>Add Product</span>
                             </Link>
                         </li>
+                        <li>
+                            <Link href="/supplier/test" passHref>
+                                <span role="link" className={styles.navItem}>test</span>
+                            </Link>
+                        </li>
                     </>
                 )}
                 {status === 'authenticated' && session.user.role === 'store-manager' && (
