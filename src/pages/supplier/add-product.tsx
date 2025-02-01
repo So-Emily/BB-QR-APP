@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import { uploadFileToS3 } from '@/lib/s3'; // removed , listFilesInS3
+import { uploadFileToS3 } from '@/lib/s3';
 import Navbar from '@/components/Navbar/Navbar';
 import { useSession } from 'next-auth/react';
 import { SketchPicker } from 'react-color';
@@ -15,7 +15,8 @@ const AddProductPage = () => {
     const [image, setImage] = useState<File | null>(null);
     const [background, setBackground] = useState<File | null>(null);
     const [styles, setStyles] = useState({ textColor: '#000000', bodyColor: '#ffffff', borderColor: '#000000' });
-    const [backsideInfo, setBacksideInfo] = useState({ additionalInfo: '' });
+    const [backsideDescription, setBacksideDescription] = useState('');
+    const [backsideMessage, setBacksideMessage] = useState('');
     const [error, setError] = useState('');
     const [imageName, setImageName] = useState(''); 
     const [backgroundName, setBackgroundName] = useState(''); 
@@ -82,10 +83,12 @@ const AddProductPage = () => {
             await uploadFileToS3(`${productKey}/product.json`, JSON.stringify(productInfo), 'application/json');
 
             // Save backside info to a separate JSON file
-            if (backsideInfo.additionalInfo.trim()) {
-                const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
-                await uploadFileToS3(backsideInfoKey, JSON.stringify(backsideInfo), 'application/json');
-            }
+            const backsideInfo = {
+                description: backsideDescription,
+                message: backsideMessage,
+            };
+            const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
+            await uploadFileToS3(backsideInfoKey, JSON.stringify(backsideInfo), 'application/json');
 
             // Show success modal
             setShowSuccessModal(true);
@@ -104,7 +107,8 @@ const AddProductPage = () => {
         setImage(null);
         setBackground(null);
         setStyles({ textColor: '#000000', bodyColor: '#ffffff', borderColor: '#000000' });
-        setBacksideInfo({ additionalInfo: '' });
+        setBacksideDescription('');
+        setBacksideMessage('');
         setError('');
         setImageName('');
         setBackgroundName('');
@@ -286,11 +290,21 @@ const AddProductPage = () => {
                     )}
                     {activeTab === 'back' && (
                         <>
-                            <label className="block">Backside Supplier Description</label>
+                            <h2 className="text-xl font-bold mb-4">Backside of Card</h2>
+
+                            <label className="block">Description</label>
                             <textarea
                                 placeholder="Supplier Description"
-                                value={backsideInfo.additionalInfo}
-                                onChange={(e) => setBacksideInfo({ ...backsideInfo, additionalInfo: e.target.value })}
+                                value={backsideDescription}
+                                onChange={(e) => setBacksideDescription(e.target.value)}
+                                className="w-full px-4 py-2 border rounded text-black"
+                            />
+
+                            <label className="block">Message</label>
+                            <textarea
+                                placeholder="Supplier Message"
+                                value={backsideMessage}
+                                onChange={(e) => setBacksideMessage(e.target.value)}
                                 className="w-full px-4 py-2 border rounded text-black"
                             />
                         </>

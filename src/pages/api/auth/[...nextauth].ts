@@ -15,7 +15,8 @@ export default NextAuth({
                 if (!credentials) {
                     return null;
                 }
-                const user = await authenticateUser(credentials.identifier, credentials.password);
+                const normalizedIdentifier = credentials.identifier.toLowerCase();
+                const user = await authenticateUser(normalizedIdentifier, credentials.password);
                 if (user) {
                     return user;
                 } else {
@@ -31,26 +32,17 @@ export default NextAuth({
     },
     callbacks: {
         async session({ session, token }) {
-            console.log('Session Callback - Token:', token);
-    
             if (token && session.user) {
-                session.user.role = token.role as string; // Add role to session
-                session.user.id = token.id as string;    // Add userId to session
+                session.user.role = token.role as string;
+                session.user.id = token.id as string;
             }
-    
-            console.log('Session Callback - Session:', session);
             return session;
         },
         async jwt({ token, user }) {
-            console.log('JWT Callback - User:', user);
-    
-            // Add userId and role to the token
             if (user) {
                 token.role = user.role;
-                token.id = user.id || user.userId; // Ensure userId is included
+                token.id = user.id || user.userId;
             }
-    
-            console.log('JWT Callback - Token:', token);
             return token;
         }
     }

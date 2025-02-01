@@ -22,7 +22,8 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
     const [image, setImage] = useState<File | null>(null);
     const [background, setBackground] = useState<File | null>(null);
     const [styles, setStyles] = useState(product.styles);
-    const [backsideInfo, setBacksideInfo] = useState({ additionalInfo: '' });
+    const [backsideDescription, setBacksideDescription] = useState('');
+    const [backsideMessage, setBacksideMessage] = useState('');
     const [error, setError] = useState('');
     const [showTextColorPicker, setShowTextColorPicker] = useState(false);
     const [showBodyColorPicker, setShowBodyColorPicker] = useState(false);
@@ -42,7 +43,8 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
 
             try {
                 const fetchedBacksideInfo = await fetchProductDataFromS3(backsideInfoKey);
-                setBacksideInfo(fetchedBacksideInfo);
+                setBacksideDescription(fetchedBacksideInfo.description);
+                setBacksideMessage(fetchedBacksideInfo.message);
             } catch (err) {
                 console.error('Failed to fetch backside info:', err);
             }
@@ -90,10 +92,12 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
             await uploadFileToS3(`${productKey}/product.json`, JSON.stringify(updatedProductInfo), 'application/json');
 
             // Save backside info to a separate JSON file
-            if (backsideInfo.additionalInfo.trim()) {
-                const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
-                await uploadFileToS3(backsideInfoKey, JSON.stringify(backsideInfo), 'application/json');
-            }
+            const backsideInfo = {
+                description: backsideDescription,
+                message: backsideMessage,
+            };
+            const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
+            await uploadFileToS3(backsideInfoKey, JSON.stringify(backsideInfo), 'application/json');
 
             router.push('/supplier/view-products');
         } catch (err) {
@@ -270,8 +274,16 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                             <label className="block">Backside Supplier Description</label>
                             <textarea
                                 placeholder="Supplier Description"
-                                value={backsideInfo.additionalInfo}
-                                onChange={(e) => setBacksideInfo({ ...backsideInfo, additionalInfo: e.target.value })}
+                                value={backsideDescription}
+                                onChange={(e) => setBacksideDescription(e.target.value)}
+                                className="w-full px-4 py-2 border rounded text-black"
+                            />
+
+                            <label className="block">Backside Supplier Message</label>
+                            <textarea
+                                placeholder="Supplier Message"
+                                value={backsideMessage}
+                                onChange={(e) => setBacksideMessage(e.target.value)}
                                 className="w-full px-4 py-2 border rounded text-black"
                             />
                         </>
