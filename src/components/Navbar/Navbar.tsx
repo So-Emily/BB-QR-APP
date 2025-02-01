@@ -22,18 +22,18 @@ const Navbar = () => {
                             </Link>
                         </li>
                         <li>
+                            <Link href="/supplier/send-qr-codes" passHref>
+                                <span role="link" className={styles.navItem}>Send QR Codes</span>
+                            </Link>
+                        </li>
+                        {/* <li>
                             <Link href="/supplier/qrcodes" passHref>
                                 <span role="link" className={styles.navItem}>QR Codes</span>
                             </Link>
-                        </li>
+                        </li> */}
                         <li>
                             <Link href="/supplier/add-product" passHref>
                                 <span role="link" className={styles.navItem}>Add Product</span>
-                            </Link>
-                        </li>
-                        <li>
-                            <Link href="/supplier/test" passHref>
-                                <span role="link" className={styles.navItem}>test</span>
                             </Link>
                         </li>
                     </>
@@ -41,8 +41,8 @@ const Navbar = () => {
                 {status === 'authenticated' && session.user.role === 'store-manager' && (
                     <>
                         <li>
-                            <Link href="/store/dashboard" passHref>
-                                <span role="link" className={styles.navItem}>Dashboard</span>
+                            <Link href="/store/download-qrcodes" passHref>
+                                <span role="link" className={styles.navItem}>Download QR Codes</span>
                             </Link>
                         </li>
                     </>

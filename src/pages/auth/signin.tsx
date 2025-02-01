@@ -37,17 +37,11 @@ const SignInPage = () => {
         <div>
             <Navbar />
             <main className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-                <h1 className="text-5xl font-bold mb-4 text-white">Booze Buddy</h1>
-                <h2 className="text-xl font-bold mb-4 text-white">sign in as</h2>
+                <h1 className="text-4xl font-bold mb-4 text-white">Sign Into Booze Buddy</h1>
+                <h2 className="text-xl font-bold mb-4 text-white">Are you a</h2>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 {!role && (
                     <div className="flex flex-col items-center space-y-4 w-full max-w-md">
-                        <button
-                            onClick={() => setRole('store-manager')}
-                            className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                        >
-                            Store Manager
-                        </button>
                         <button
                             onClick={() => setRole('supplier')}
                             className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -55,6 +49,13 @@ const SignInPage = () => {
                             Supplier
                         </button>
                         <p className="text-white">or</p>
+                        <button
+                            onClick={() => setRole('store-manager')}
+                            className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                        >
+                            Store Manager
+                        </button>
+                        <p className="text-white">otherwise</p>
                         <button
                             onClick={() => router.push('/auth/signup')}
                             className="w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"

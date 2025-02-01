@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb';
+import mongoose from 'mongoose';
 
 const uri: string = process.env.MONGODB_URI as string;
 const options = {
@@ -33,8 +34,6 @@ if (process.env.NODE_ENV === 'development') {
     clientPromise = client.connect();
 }
 
-import mongoose from 'mongoose';
-
 export async function connectToDatabase() {
     try {
         console.log('Attempting to connect to MongoDB...');
@@ -56,4 +55,3 @@ export async function connectToDatabase() {
         throw new Error('MongoDB connection failed');
     }
 }
-
