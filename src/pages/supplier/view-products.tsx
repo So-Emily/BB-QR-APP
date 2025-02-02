@@ -49,7 +49,7 @@ const ViewProductsPage = () => {
                 const backsideInfoKey = `suppliers/${supplierName}/backsideInfo.json`;
                 try {
                     const fetchedBacksideInfo = await fetchProductDataFromS3(backsideInfoKey);
-                    console.log('Fetched backsideInfo:', fetchedBacksideInfo); // Add this line to log the fetched data
+                    // console.log('Fetched backsideInfo:', fetchedBacksideInfo); 
                     setBacksideInfo(fetchedBacksideInfo);
 
                 } catch (err) {
@@ -137,6 +137,7 @@ const ViewProductsPage = () => {
                                 <div className="p-4">
                                     <h2 className="text-xl font-bold">Welcome from</h2>
                                     <h1 className="text-2xl font-bold">{supplierName}</h1>
+                                    
                                     <label className="text-sm">Description:</label>
                                     <p>{backsideInfo.description}</p>
 

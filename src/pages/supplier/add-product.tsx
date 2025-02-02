@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { uploadFileToS3 } from '@/lib/s3';
 import Navbar from '@/components/Navbar/Navbar';
+import { fetchProductDataFromS3 } from '@/lib/s3';
 import { useSession } from 'next-auth/react';
 import { SketchPicker } from 'react-color';
 
@@ -55,8 +56,8 @@ const AddProductPage = () => {
         const formattedProductName = normalizeName(name);
         const productKey = `suppliers/${formattedSupplierName}/products/${formattedProductName}`;
 
-        console.log('productKey:', productKey);
-        console.log('image.name:', image.name);
+        // console.log('productKey:', productKey);
+        // console.log('image.name:', image.name);
 
         try {
             const imageBuffer = await image.arrayBuffer();
@@ -83,12 +84,23 @@ const AddProductPage = () => {
             await uploadFileToS3(`${productKey}/product.json`, JSON.stringify(productInfo), 'application/json');
 
             // Save backside info to a separate JSON file
-            const backsideInfo = {
-                description: backsideDescription,
-                message: backsideMessage,
-            };
-            const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
-            await uploadFileToS3(backsideInfoKey, JSON.stringify(backsideInfo), 'application/json');
+            // Fetch existing backside info
+        const backsideInfoKey = `suppliers/${supplierName}/backsideInfo.json`;
+        let existingBacksideInfo = {};
+        try {
+            existingBacksideInfo = await fetchProductDataFromS3(backsideInfoKey);
+        } catch (err) {
+            console.error('Failed to fetch existing backside info:', err);
+        }
+
+        // Update backside info only if fields are not empty
+        const updatedBacksideInfo = {
+            ...existingBacksideInfo,
+            ...(backsideDescription && { description: backsideDescription }),
+            ...(backsideMessage && { message: backsideMessage }),
+        };
+
+        await uploadFileToS3(backsideInfoKey, JSON.stringify(updatedBacksideInfo), 'application/json');
 
             // Show success modal
             setShowSuccessModal(true);
