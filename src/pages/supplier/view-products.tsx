@@ -16,7 +16,7 @@ const capitalizeWords = (str: string) => {
 const ViewProductsPage = () => {
     const { data: session } = useSession();
     const [products, setProducts] = useState<Product[]>([]);
-    const [backsideInfo, setBacksideInfo] = useState({ additionalInfo: '' });
+    const [backsideInfo, setBacksideInfo] = useState({ description: '', message: '' });
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -49,7 +49,9 @@ const ViewProductsPage = () => {
                 const backsideInfoKey = `suppliers/${supplierName}/backsideInfo.json`;
                 try {
                     const fetchedBacksideInfo = await fetchProductDataFromS3(backsideInfoKey);
+                    console.log('Fetched backsideInfo:', fetchedBacksideInfo); // Add this line to log the fetched data
                     setBacksideInfo(fetchedBacksideInfo);
+
                 } catch (err) {
                     console.error('Failed to fetch backside info:', err);
                 }
@@ -133,8 +135,13 @@ const ViewProductsPage = () => {
                             }
                             backContent={
                                 <div className="p-4">
-                                    <h2 className="text-xl font-bold">Additional Info</h2>
-                                    <p>{backsideInfo.additionalInfo}</p>
+                                    <h2 className="text-xl font-bold">Welcome from</h2>
+                                    <h1 className="text-2xl font-bold">{supplierName}</h1>
+                                    <label className="text-sm">Description:</label>
+                                    <p>{backsideInfo.description}</p>
+
+                                    <label className="text-sm">Message:</label>
+                                    <p>{backsideInfo.message} </p>
                                 </div>
                             }
                             backgroundUrl={product.backgroundUrl}
