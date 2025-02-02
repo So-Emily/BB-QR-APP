@@ -74,7 +74,7 @@ const SendQRCodesPage = () => {
             const selectedProductData = products.filter(product => selectedProducts.includes(product.name));
             const qrCodePromises = selectedProductData.flatMap(product =>
                 selectedStores.map(async store => {
-                    const qrCodeDataUrl = await QRCode.toDataURL(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/supplier/products/${supplierName}/${store}/${product.name.replace(/\s+/g, '-').toLowerCase()}`, { errorCorrectionLevel: 'high' });
+                    const qrCodeDataUrl = await QRCode.toDataURL(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${supplierName}/${store}/${product.name.replace(/\s+/g, '-').toLowerCase()}`, { errorCorrectionLevel: 'high' });
                     const response = await fetch(qrCodeDataUrl);
                     const blob = await response.blob();
                     const arrayBuffer = await blob.arrayBuffer();
@@ -148,7 +148,7 @@ const SendQRCodesPage = () => {
                                         <div key={storeIndex} className="mb-4">
                                             <h3 className="text-lg font-semibold">{store}</h3>
                                             <QRCodeCanvas
-                                                value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/supplier/products/${session?.user.name?.replace(/\s+/g, '-').toLowerCase()}/${store}/${product.name.replace(/\s+/g, '-').toLowerCase()}`}
+                                                value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${session?.user.name?.replace(/\s+/g, '-').toLowerCase()}/${store}/${product.name.replace(/\s+/g, '-').toLowerCase()}`}
                                                 size={128}
                                                 level="H"
                                                 includeMargin={true}

@@ -29,34 +29,43 @@ const DownloadQRCodesPage = () => {
         const fetchQRCodes = async () => {
             try {
                 const storeName = session.user.name?.replace(/\s+/g, '-').toLowerCase() ?? '';
-                console.log(`Fetching QR codes for store: ${storeName}`);
-                const qrCodeKeys = await listFilesInS3(`suppliers/*/stores/${storeName}/`);
-                console.log(`QR code keys: ${qrCodeKeys}`);
-                if (qrCodeKeys.length === 0) {
-                    console.warn('No QR code keys found');
-                }
-                const qrCodePromises = qrCodeKeys
-                    .filter((key): key is string => key !== undefined)
-                    .map(async (key: string) => {
-                        try {
-                            console.log(`Fetching signed URL for key: ${key}`);
-                            const signedUrl = await getSignedUrlForS3(key);
-                            const productName = key.split('/').pop()?.replace('.svg', '');
-                            const supplierName = key.split('/')[1];
-                            return {
-                                key,
-                                signedUrl,
-                                productName,
-                                supplierName,
-                                storeName,
-                            };
-                        } catch (err) {
-                            console.error(`Failed to fetch QR code data for key ${key}:`, err);
-                            return null;
-                        }
+                const supplierKeys = await listFilesInS3('suppliers/');
+                const supplierNames = supplierKeys
+                    .filter(key => key.endsWith('/'))
+                    .map(key => {
+                        const parts = key.split('/');
+                        return parts.length > 1 ? parts[1] : '';
                     });
-                const qrCodes = (await Promise.all(qrCodePromises)).filter(qrCode => qrCode !== null) as QRCode[];
-                console.log(`Fetched QR codes: ${qrCodes}`);
+
+                console.log('Supplier Names:', supplierNames);
+
+                const qrCodePromises = supplierNames.flatMap(async supplierName => {
+                    if (!supplierName) return [];
+                    const qrCodeKeys = await listFilesInS3(`suppliers/${supplierName}/stores/${storeName}/qrcodes/`);
+                    return qrCodeKeys
+                        .filter((key): key is string => key !== undefined)
+                        .map(async (key: string) => {
+                            try {
+                                const signedUrl = await getSignedUrlForS3(key);
+                                const productName = key.split('/').pop()?.replace('.svg', '');
+                                console.log('QR Code Key:', key);
+                                console.log('Product Name:', productName);
+                                console.log('Supplier Name:', supplierName);
+                                return {
+                                    key,
+                                    signedUrl,
+                                    productName,
+                                    supplierName,
+                                    storeName,
+                                };
+                            } catch (err) {
+                                console.error(`Failed to fetch QR code data for key ${key}:`, err);
+                                return null;
+                            }
+                        });
+                });
+
+                const qrCodes = (await Promise.all(qrCodePromises.flat())).filter(qrCode => qrCode !== null) as QRCode[];
                 setQRCodes(qrCodes);
             } catch (err) {
                 console.error('Failed to fetch QR codes:', err);
@@ -101,12 +110,12 @@ const DownloadQRCodesPage = () => {
                             <h2 className="text-xl font-bold mt-4 text-center">{qrCode.productName}</h2>
                             <p className="text-center">Supplier: {qrCode.supplierName}</p>
                             <QRCodeCanvas
-                                value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/supplier/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`}
+                                value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`}
                                 size={128}
                                 level="H"
                                 includeMargin={true}
                             />
-                            <Link href={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/supplier/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`} passHref>
+                            <Link href={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`} passHref>
                                 <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
                                     View Product Page
                                 </button>
