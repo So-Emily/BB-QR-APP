@@ -4,8 +4,16 @@ import Navbar from '@/components/Navbar/Navbar';
 import Card from '@/components/Card/Card';
 import styles from '@/components/Card/Card.module.css';
 import { useEffect, useState } from 'react';
+import { Product } from '@/types';
 
-const StoreProductPage = ({ product, supplierName, backsideInfo }) => {
+interface StoreProductPageProps {
+    product: Product;
+    supplierName: string;
+    storeName: string;
+    backsideInfo: { description: string; message: string };
+}
+
+const StoreProductPage = ({ product, supplierName, backsideInfo }: StoreProductPageProps) => {
     const [error, setError] = useState('');
 
     // Track scan count when the page loads
