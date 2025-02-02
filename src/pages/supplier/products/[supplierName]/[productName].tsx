@@ -11,7 +11,7 @@ import styles from '@/components/Card/Card.module.css';
 interface ProductPageProps {
     product: Product & { id?: string }; // Add optional `id` field for MongoDB
     supplierName: string;
-    backsideInfo: { additionalInfo: string };
+    backsideInfo: { description: string, message: string };
 }
 
 const capitalizeWords = (str: string) => {
@@ -89,8 +89,14 @@ const ProductPage = ({ product, supplierName, backsideInfo }: ProductPageProps) 
 
     const backContent = (
         <div className="p-4">
-            <h2 className="text-xl font-bold">Additional Info</h2>
-            <p>{backsideInfo.additionalInfo || 'No additional information available.'}</p>
+            <h2 className="text-xl font-bold">Welcome from</h2>
+            <h1 className="text-2xl font-bold">{supplierName}</h1>
+            
+            <label className="text-sm">Description:</label>
+            <p>{backsideInfo.description}</p>
+
+            <label className="text-sm">Message:</label>
+            <p>{backsideInfo.message} </p>
         </div>
     );
 
