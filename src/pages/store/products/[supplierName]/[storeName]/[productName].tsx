@@ -13,7 +13,11 @@ interface StoreProductPageProps {
     backsideInfo: { description: string; message: string };
 }
 
-const StoreProductPage = ({ product, supplierName, backsideInfo }: StoreProductPageProps) => {
+const StoreProductPage = ({ product, supplierName, storeName, backsideInfo }: StoreProductPageProps) => {
+    console.log(`Supplier Name: ${supplierName}`);
+    console.log(`Store Name: ${storeName}`);
+    console.log(`Product Name: ${product.name}`);
+
     const [error, setError] = useState('');
 
     // Track scan count when the page loads
@@ -123,8 +127,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             body: JSON.stringify({ supplierName, productName }),
         });
 
+        console.log(`Supplier Name: ${supplierName}`);
+        console.log(`Store Name: ${storeName}`);
+        console.log(`Product Name: ${productName}`);
+
         // Fetch product data from S3
-        const productData = await fetchProductDataFromS3(`suppliers/${supplierName}/products/${productName}.json`);
+        const productData = await fetchProductDataFromS3(`suppliers/${supplierName}/products/${productName}/product.json`);
         const backsideInfoKey = `suppliers/${supplierName}/backsideInfo.json`;
         let backsideInfo = { description: '', message: '' };
 

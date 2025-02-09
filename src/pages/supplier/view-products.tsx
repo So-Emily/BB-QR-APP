@@ -48,10 +48,12 @@ const ViewProductsPage = () => {
                 // Fetch backside info
                 const backsideInfoKey = `suppliers/${supplierName}/backsideInfo.json`;
                 try {
-                    const fetchedBacksideInfo = await fetchProductDataFromS3(backsideInfoKey);
-                    // console.log('Fetched backsideInfo:', fetchedBacksideInfo); 
-                    setBacksideInfo(fetchedBacksideInfo);
-
+                    const response = await fetchProductDataFromS3(backsideInfoKey);
+                    if (response) {
+                        setBacksideInfo(response);
+                    } else {
+                        console.warn('Backside info not found');
+                    }
                 } catch (err) {
                     console.error('Failed to fetch backside info:', err);
                 }
