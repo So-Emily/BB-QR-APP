@@ -9,9 +9,9 @@ import QRCode from 'qrcode';
 const SendQRCodesPage = () => {
     const { data: session } = useSession();
     const [products, setProducts] = useState<Product[]>([]);
-    const [stores, setStores] = useState<string[]>([]);
+    const [stores, setStores] = useState<{ storeName: string; storeNumber: string; name: string }[]>([]);
     const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-    const [selectedStores, setSelectedStores] = useState<string[]>([]);
+    const [selectedStores, setSelectedStores] = useState<{ storeName: string; storeNumber: string; name: string }[]>([]);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -43,7 +43,10 @@ const SendQRCodesPage = () => {
                     throw new Error('Failed to fetch store managers');
                 }
                 const storeData = await storeResponse.json();
-                setStores(storeData.map((store: { name: string }) => store.name));
+                setStores(storeData.map((store: { name: string; storeDetails: { storeName: string; storeNumber: string } }) => ({
+                    ...store.storeDetails,
+                    name: store.name
+                })));
             } catch (err) {
                 setError('Failed to fetch products or stores: ' + err);
             }
@@ -60,11 +63,11 @@ const SendQRCodesPage = () => {
         );
     };
 
-    const handleStoreSelection = (storeId: string) => {
+    const handleStoreSelection = (store: { storeName: string; storeNumber: string; name: string }) => {
         setSelectedStores(prevSelected =>
-            prevSelected.includes(storeId)
-                ? prevSelected.filter(id => id !== storeId)
-                : [...prevSelected, storeId]
+            prevSelected.includes(store)
+                ? prevSelected.filter(s => s !== store)
+                : [...prevSelected, store]
         );
     };
 
@@ -74,24 +77,28 @@ const SendQRCodesPage = () => {
             const selectedProductData = products.filter(product => selectedProducts.includes(product.name));
             const qrCodePromises = selectedProductData.flatMap(product =>
                 selectedStores.map(async store => {
-                    const qrCodeDataUrl = await QRCode.toDataURL(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${supplierName}/${store}/${product.name.replace(/\s+/g, '-').toLowerCase()}`, { errorCorrectionLevel: 'high' });
+                    const storeIdentifier = `${store.storeName.replace(/\s+/g, '-').toLowerCase()}-${store.storeNumber}`;
+                    const qrCodeDataUrl = await QRCode.toDataURL(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${supplierName}/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`, { errorCorrectionLevel: 'high' });
                     const response = await fetch(qrCodeDataUrl);
                     const blob = await response.blob();
                     const arrayBuffer = await blob.arrayBuffer();
                     const buffer = Buffer.from(arrayBuffer);
-                    const qrCodeKey = `suppliers/${supplierName}/stores/${store}/${product.name.replace(/\s+/g, '-').toLowerCase()}.svg`;
+                    const productFolder = `suppliers/${supplierName}/stores/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
+                    const qrCodeKey = `${productFolder}/${product.name.replace(/\s+/g, '-').toLowerCase()}.svg`;
+                    const productInfoKey = `${productFolder}/info.json`;
+                    const productInfo = {
+                        productName: product.name,
+                        supplierName,
+                        storeUsername: store.name,
+                        storeName: store.storeName,
+                        storeNumber: store.storeNumber,
+                    };
                     await uploadFileToS3(qrCodeKey, buffer, 'image/svg+xml');
+                    await uploadFileToS3(productInfoKey, JSON.stringify(productInfo), 'application/json');
                 })
             );
 
             await Promise.all(qrCodePromises);
-
-            // Send selected products and stores to the backend
-            await fetch('/api/send-qrcodes', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ products: selectedProducts, stores: selectedStores }),
-            });
 
             alert('QR codes sent successfully!');
         } catch (err) {
@@ -132,7 +139,7 @@ const SendQRCodesPage = () => {
                                     onChange={() => handleStoreSelection(store)}
                                     className="mr-2"
                                 />
-                                <label htmlFor={`store-${index}`}>{store}</label>
+                                <label htmlFor={`store-${index}`}>{`${store.storeName}-${store.storeNumber}`}</label>
                             </div>
                         ))}
                     </div>
@@ -146,9 +153,9 @@ const SendQRCodesPage = () => {
                                     <h2 className="text-xl font-bold mt-4 text-center">{product.name}</h2>
                                     {selectedStores.map((store, storeIndex) => (
                                         <div key={storeIndex} className="mb-4">
-                                            <h3 className="text-lg font-semibold">{store}</h3>
+                                            <h3 className="text-lg font-semibold">{`${store.storeName}`}</h3>
                                             <QRCodeCanvas
-                                                value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${session?.user.name?.replace(/\s+/g, '-').toLowerCase()}/${store}/${product.name.replace(/\s+/g, '-').toLowerCase()}`}
+                                                value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${session?.user.name?.replace(/\s+/g, '-').toLowerCase()}/${store.storeName.replace(/\s+/g, '-').toLowerCase()}-${store.storeNumber}/${product.name.replace(/\s+/g, '-').toLowerCase()}`}
                                                 size={128}
                                                 level="H"
                                                 includeMargin={true}
@@ -162,7 +169,7 @@ const SendQRCodesPage = () => {
                 </div>
                 <button
                     onClick={handleSubmit}
-                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="fixed bottom-4 left-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
                     Send QR Codes
                 </button>

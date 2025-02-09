@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar/Navbar';
-import { listFilesInS3, getSignedUrlForS3 } from '@/lib/s3';
+import { listFilesInS3, getSignedUrlForS3, fetchProductDataFromS3 } from '@/lib/s3';
 import { QRCodeCanvas } from 'qrcode.react';
 import Link from 'next/link';
 import JSZip from 'jszip';
@@ -10,7 +10,7 @@ import { saveAs } from 'file-saver';
 interface QRCode {
     key: string;
     signedUrl: string;
-    productName: string | undefined;
+    productName: string;
     supplierName: string;
     storeName: string;
 }
@@ -23,13 +23,34 @@ const DownloadQRCodesPage = () => {
     useEffect(() => {
         if (!session || !session.user) {
             setError('User not authenticated');
+            console.error('User not authenticated');
             return;
         }
 
         const fetchQRCodes = async () => {
             try {
-                const storeName = session.user.name?.replace(/\s+/g, '-').toLowerCase() ?? '';
+                console.log('Session data:', session);
+                const userResponse = await fetch(`/api/user`);
+                if (!userResponse.ok) {
+                    throw new Error('Failed to fetch user details');
+                }
+                const userData = await userResponse.json();
+                console.log('User Data:', userData);
+
+                const storeDetails = userData.storeDetails;
+                console.log('Store Details:', storeDetails);
+                if (!storeDetails || storeDetails.length === 0) {
+                    setError('Store details not found');
+                    console.error('Store details not found');
+                    return;
+                }
+
+                const storeName = `${storeDetails.storeName.replace(/\s+/g, '-').toLowerCase()}-${storeDetails.storeNumber}`;
+                console.log('Store Name:', storeName);
+
                 const supplierKeys = await listFilesInS3('suppliers/');
+                console.log('Supplier Keys:', supplierKeys);
+
                 const supplierNames = supplierKeys
                     .filter((key): key is string => key !== undefined && key.endsWith('/'))
                     .map(key => {
@@ -41,32 +62,33 @@ const DownloadQRCodesPage = () => {
 
                 const qrCodePromises = supplierNames.flatMap(supplierName => {
                     if (!supplierName) return [];
-                    return listFilesInS3(`suppliers/${supplierName}/stores/${storeName}/qrcodes/`).then(qrCodeKeys =>
-                        qrCodeKeys
-                            .filter((key): key is string => key !== undefined)
+                    return listFilesInS3(`suppliers/${supplierName}/stores/${storeName}/`).then(qrCodeKeys => {
+                        console.log(`QR Code Keys for supplier ${supplierName}:`, qrCodeKeys);
+                        return qrCodeKeys
+                            .filter((key): key is string => key !== undefined && key.endsWith('info.json'))
                             .map(async (key: string) => {
                                 try {
-                                    const signedUrl = await getSignedUrlForS3(key);
-                                    const productName = key.split('/').pop()?.replace('.svg', '');
-                                    console.log('QR Code Key:', key);
-                                    console.log('Product Name:', productName);
-                                    console.log('Supplier Name:', supplierName);
+                                    const productInfo = await fetchProductDataFromS3(key);
+                                    console.log('Product Info:', productInfo);
+                                    const qrCodeKey = key.replace('info.json', `${productInfo.productName.replace(/\s+/g, '-').toLowerCase()}.svg`);
+                                    const signedUrl = await getSignedUrlForS3(qrCodeKey);
                                     return {
-                                        key,
+                                        key: qrCodeKey,
                                         signedUrl,
-                                        productName,
-                                        supplierName,
-                                        storeName,
+                                        productName: productInfo.productName,
+                                        supplierName: productInfo.supplierName,
+                                        storeName: `${productInfo.storeName}-${productInfo.storeNumber}`,
                                     };
                                 } catch (err) {
                                     console.error(`Failed to fetch QR code data for key ${key}:`, err);
                                     return null;
                                 }
-                            })
-                    );
+                            });
+                    });
                 });
 
                 const qrCodes = (await Promise.all((await Promise.all(qrCodePromises)).flat())).filter((qrCode): qrCode is QRCode => qrCode !== null);
+                console.log('QR Codes:', qrCodes);
                 setQRCodes(qrCodes);
             } catch (err) {
                 console.error('Failed to fetch QR codes:', err);
@@ -82,6 +104,7 @@ const DownloadQRCodesPage = () => {
         const folder = zip.folder('qr-codes');
         if (!folder) {
             setError('Failed to create zip folder');
+            console.error('Failed to create zip folder');
             return;
         }
         for (const qrCode of qrCodes) {
