@@ -85,7 +85,7 @@ const AddProductPage = () => {
 
             // Save backside info to a separate JSON file
             // Fetch existing backside info
-        const backsideInfoKey = `suppliers/${supplierName}/backsideInfo.json`;
+        const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
         let existingBacksideInfo = {};
         try {
             existingBacksideInfo = await fetchProductDataFromS3(backsideInfoKey);
