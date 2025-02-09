@@ -52,7 +52,7 @@ const DownloadQRCodesPage = () => {
                 console.log('Supplier Keys:', supplierKeys);
 
                 const supplierNames = supplierKeys
-                    .filter((key): key is string => key !== undefined && key.endsWith('/'))
+                    .filter((key): key is string => key !== undefined && key.includes('/stores/'))
                     .map(key => {
                         const parts = key.split('/');
                         return parts.length > 1 ? parts[1] : '';

@@ -86,12 +86,13 @@ const SendQRCodesPage = () => {
                     const productFolder = `suppliers/${supplierName}/stores/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
                     const qrCodeKey = `${productFolder}/${product.name.replace(/\s+/g, '-').toLowerCase()}.svg`;
                     const productInfoKey = `${productFolder}/info.json`;
+
                     const productInfo = {
-                        productName: product.name,
+                        productName: product.name.replace(/\s+/g, '-').toLowerCase(),
                         supplierName,
-                        storeUsername: store.name,
-                        storeName: store.storeName,
-                        storeNumber: store.storeNumber,
+                        storeUsername: store.name.replace(/\s+/g, '-').toLowerCase(),
+                        storeName: store.storeName.replace(/\s+/g, '-').toLowerCase(),
+                        storeNumber: store.storeNumber.replace(/\s+/g, '-').toLowerCase(),
                     };
                     await uploadFileToS3(qrCodeKey, buffer, 'image/svg+xml');
                     await uploadFileToS3(productInfoKey, JSON.stringify(productInfo), 'application/json');
