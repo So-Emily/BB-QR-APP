@@ -29,13 +29,13 @@ const DownloadQRCodesPage = () => {
 
         const fetchQRCodes = async () => {
             try {
-                console.log('Session data:', session);
+                // console.log('Session data:', session);
                 const userResponse = await fetch(`/api/user`);
                 if (!userResponse.ok) {
                     throw new Error('Failed to fetch user details');
                 }
                 const userData = await userResponse.json();
-                console.log('User Data:', userData);
+                // console.log('User Data:', userData);
 
                 const storeDetails = userData.storeDetails;
                 console.log('Store Details:', storeDetails);
@@ -88,8 +88,13 @@ const DownloadQRCodesPage = () => {
                 });
 
                 const qrCodes = (await Promise.all((await Promise.all(qrCodePromises)).flat())).filter((qrCode): qrCode is QRCode => qrCode !== null);
-                console.log('QR Codes:', qrCodes);
-                setQRCodes(qrCodes);
+
+                // Filter out duplicate QR codes
+                const uniqueQRCodes = Array.from(new Set(qrCodes.map(qrCode => qrCode.key)))
+                    .map(key => qrCodes.find(qrCode => qrCode.key === key));
+
+                console.log('Unique QR Codes:', uniqueQRCodes);
+                setQRCodes(uniqueQRCodes as QRCode[]);
             } catch (err) {
                 console.error('Failed to fetch QR codes:', err);
                 setError('Failed to fetch QR codes: ' + err);
