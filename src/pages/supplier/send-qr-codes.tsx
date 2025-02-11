@@ -94,7 +94,7 @@ const SendQRCodesPage = () => {
                         storeName: store.storeName.replace(/\s+/g, '-').toLowerCase(),
                         storeNumber: store.storeNumber.replace(/\s+/g, '-').toLowerCase(),
                     };
-                    await uploadFileToS3(qrCodeKey, buffer, 'image/svg+xml');
+                    await uploadFileToS3(qrCodeKey, buffer, 'image/svg');
                     await uploadFileToS3(productInfoKey, JSON.stringify(productInfo), 'application/json');
                 })
             );
