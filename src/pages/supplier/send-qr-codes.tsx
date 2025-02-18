@@ -19,25 +19,49 @@ const SendQRCodesPage = () => {
             setError('User not authenticated');
             return;
         }
-
+    
         const fetchProductsAndStores = async () => {
             try {
                 const supplierName = session.user.name?.replace(/\s+/g, '-').toLowerCase() ?? '';
+    
+                // ✅ Fetch products from MongoDB first
+                const mongoResponse = await fetch('/api/products/get'); // Fetch from MongoDB
+                const mongoProducts = await mongoResponse.json();
+    
+                if (!mongoResponse.ok) {
+                    throw new Error('Failed to fetch products from MongoDB');
+                }
+    
+                console.log("🚀 MongoDB Products:", mongoProducts);
+    
+                // ✅ Fetch product details from S3
                 const productKeys = await listFilesInS3(`suppliers/${supplierName}/products/`);
                 const jsonKeys = productKeys.filter((key): key is string => key !== undefined && key.endsWith('product.json'));
+    
                 const productPromises = jsonKeys.map(async (key: string) => {
                     try {
                         const productData = await fetchProductDataFromS3(key);
-                        return productData;
+    
+                        // ✅ Find the corresponding MongoDB product by name
+                        const mongoProduct = mongoProducts.find((p: Product) => p.name === productData.name);
+
+                        if (mongoProduct) {
+                            return { ...productData, _id: mongoProduct._id, status: mongoProduct.status, scanCount: mongoProduct.scanCount };
+                        } else {
+                            return productData; // No MongoDB entry found
+                        }
                     } catch (err) {
                         console.error(`Failed to fetch product data for key ${key}:`, err);
                         return null;
                     }
                 });
+    
                 const products = (await Promise.all(productPromises)).filter(product => product !== null);
+    
+                console.log("✅ Final Merged Products:", products);
                 setProducts(products);
-
-                // Fetch store managers
+    
+                // ✅ Fetch store managers
                 const storeResponse = await fetch('/api/store-managers');
                 if (!storeResponse.ok) {
                     throw new Error('Failed to fetch store managers');
@@ -51,9 +75,10 @@ const SendQRCodesPage = () => {
                 setError('Failed to fetch products or stores: ' + err);
             }
         };
-
+    
         fetchProductsAndStores();
     }, [session]);
+    
 
     const handleProductSelection = (productId: string) => {
         setSelectedProducts(prevSelected =>
@@ -72,40 +97,101 @@ const SendQRCodesPage = () => {
     };
 
     const handleSubmit = async () => {
-        try {
-            const supplierName = session?.user.name?.replace(/\s+/g, '-').toLowerCase() ?? '';
-            const selectedProductData = products.filter(product => selectedProducts.includes(product.name));
-            const qrCodePromises = selectedProductData.flatMap(product =>
-                selectedStores.map(async store => {
-                    const storeIdentifier = `${store.storeName.replace(/\s+/g, '-').toLowerCase()}-${store.storeNumber}`;
-                    const qrCodeDataUrl = await QRCode.toDataURL(`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${supplierName}/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`, { errorCorrectionLevel: 'high' });
-                    const response = await fetch(qrCodeDataUrl);
-                    const blob = await response.blob();
-                    const arrayBuffer = await blob.arrayBuffer();
-                    const buffer = Buffer.from(arrayBuffer);
-                    const productFolder = `suppliers/${supplierName}/stores/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
-                    const qrCodeKey = `${productFolder}/${product.name.replace(/\s+/g, '-').toLowerCase()}.svg`;
-                    const productInfoKey = `${productFolder}/info.json`;
+      try {
+          const supplierName = session?.user.name?.replace(/\s+/g, '-').toLowerCase() ?? '';
+          const selectedProductData = products.filter(product => selectedProducts.includes(product.name));
 
-                    const productInfo = {
-                        productName: product.name.replace(/\s+/g, '-').toLowerCase(),
-                        supplierName,
-                        storeUsername: store.name.replace(/\s+/g, '-').toLowerCase(),
-                        storeName: store.storeName.replace(/\s+/g, '-').toLowerCase(),
-                        storeNumber: store.storeNumber.replace(/\s+/g, '-').toLowerCase(),
-                    };
-                    await uploadFileToS3(qrCodeKey, buffer, 'image/svg');
-                    await uploadFileToS3(productInfoKey, JSON.stringify(productInfo), 'application/json');
-                })
-            );
+          for (const product of selectedProductData) {
+              for (const store of selectedStores) {
+                  const storeIdentifier = `${store.storeName.replace(/\s+/g, '-').toLowerCase()}-${store.storeNumber}`;
 
-            await Promise.all(qrCodePromises);
+                  console.log("🚀 Assigning Product:", product);
+                  console.log("Product ID:", product._id);
+                  console.log("Store ID:", storeIdentifier);
 
-            alert('QR codes sent successfully!');
-        } catch (err) {
-            setError('Failed to send QR codes: ' + err);
+                  if (!product._id) {
+                      console.error("❌ Error: Product ID is missing", product);
+                      continue; // Skip this product if `_id` is missing
+                  }
+
+                  // ✅ First, update MongoDB with storeId
+                  const assignSuccess = await assignProductToStore(product._id, storeIdentifier);
+                  if (!assignSuccess) {
+                      console.error(`Failed to assign product ${product.name} to store ${storeIdentifier}`);
+                      continue; // Skip QR generation if assignment fails
+                  }
+
+                  // ✅ Then, generate the QR code
+                  console.log("🚀 Generating QR Code for Product:", product.name);
+                  console.log("Supplier Name:", supplierName);
+                  console.log("Store Identifier:", storeIdentifier);
+
+                  if (!supplierName) console.error("❌ ERROR: supplierName is undefined!");
+                  if (!storeIdentifier) console.error("❌ ERROR: storeIdentifier is undefined!");
+
+                  const qrCodeURL = `${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${supplierName}/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
+
+                  const qrCodeDataUrl = await QRCode.toDataURL(qrCodeURL, { errorCorrectionLevel: 'high' });
+
+                  const response = await fetch(qrCodeDataUrl);
+                  const blob = await response.blob();
+                  const arrayBuffer = await blob.arrayBuffer();
+                  const buffer = Buffer.from(arrayBuffer);
+
+                  const productFolder = `suppliers/${supplierName}/stores/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
+                  const qrCodeKey = `${productFolder}/${product.name.replace(/\s+/g, '-').toLowerCase()}.svg`;
+                  const productInfoKey = `${productFolder}/info.json`;
+
+                  const productInfo = {
+                      productName: product.name.replace(/\s+/g, '-').toLowerCase(),
+                      supplierName,
+                      storeUsername: store.name.replace(/\s+/g, '-').toLowerCase(),
+                      storeName: store.storeName.replace(/\s+/g, '-').toLowerCase(),
+                      storeNumber: store.storeNumber.replace(/\s+/g, '-').toLowerCase(),
+                  };
+
+                  await uploadFileToS3(qrCodeKey, buffer, 'image/svg+xml');
+                  await uploadFileToS3(productInfoKey, JSON.stringify(productInfo), 'application/json');
+              }
+          }
+
+          alert('QR codes sent and products assigned successfully!');
+      } catch (err) {
+          setError('Failed to send QR codes: ' + err);
+      }
+  };
+
+
+const assignProductToStore = async (productId: string, storeId: string) => {
+    try {
+        console.log("🚀 Assigning product:", productId, "to store:", storeId); // Debugging output
+
+        const response = await fetch('/api/products/assign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId, storeId }),
+        });
+
+        const data = await response.json();
+        console.log("✅ Assign API Response:", data); // Log API response
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to assign product');
         }
-    };
+
+        return true;
+    } catch (error) {
+        console.error('❌ Error assigning product:', error);
+        if (error instanceof Error) {
+            alert(`Error: ${error.message}`);
+        } else {
+            alert('An unknown error occurred');
+        }
+        return false;
+    }
+};
+
+    
 
     return (
         <div>

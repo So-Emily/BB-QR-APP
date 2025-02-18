@@ -1,8 +1,7 @@
-// src/types.ts
 export interface Product {
-    id?: string;
+    _id: string;  
     name: string;
-    description: string;
+    description?: string;
     pairing: string[];
     taste: string[];
     location: {
@@ -20,4 +19,6 @@ export interface Product {
     backsideInfo: {
         additionalInfo: string;
     };
+    status?: 'pending' | 'assigned';
+    scanCount?: number;
 }
