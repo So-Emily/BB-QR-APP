@@ -23,13 +23,13 @@ const StoreProductPage = ({ product, supplierName, storeName, backsideInfo }: St
     // Track scan count when the page loads
     useEffect(() => {
         const trackScan = async () => {
-            if (!product.id) {
+            if (!product._id) {
                 console.error('Product ID is missing. Cannot track scan count.');
                 return;
             }
 
             try {
-                const response = await fetch(`/api/scans/${product.id}`, {
+                const response = await fetch(`/api/scans/${product._id}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                 });
@@ -38,7 +38,7 @@ const StoreProductPage = ({ product, supplierName, storeName, backsideInfo }: St
                     throw new Error('Failed to track scan count.');
                 }
 
-                console.log(`Scan tracked for product: ${product.id}`);
+                console.log(`Scan tracked for product: ${product._id}`);
             } catch (err) {
                 console.error('Error tracking scan count:', err);
                 setError('Failed to track scan count.');
@@ -46,7 +46,7 @@ const StoreProductPage = ({ product, supplierName, storeName, backsideInfo }: St
         };
 
         trackScan();
-    }, [product.id]);
+    }, [product._id]);
 
     if (!product) {
         return <div>Product not found</div>;

@@ -58,3 +58,6 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
+
+// Switch functionality to store. Get mongo to use new objects. Find a way to fetch scans for both supplier and store. 

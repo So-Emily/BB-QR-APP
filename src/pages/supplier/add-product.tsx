@@ -70,19 +70,44 @@ const AddProductPage = () => {
                 backgroundUrl = backgroundUpload.Location || '';
             }
 
-            const productInfo = {
-                name,
-                description,
-                pairing: pairing.filter(pair => pair !== ''), // Filter out empty pairings
-                taste: taste.filter(t => t !== ''), // Filter out empty taste inputs
-                location,
-                imageUrl: imageUpload.Location,
-                backgroundUrl,
-                styles,
-            };
-
-            await uploadFileToS3(`${productKey}/product.json`, JSON.stringify(productInfo), 'application/json');
-
+            try {
+                const productInfo = {
+                    name,
+                    description,
+                    pairing: pairing.filter(pair => pair !== ''),
+                    taste: taste.filter(t => t !== ''),
+                    location,
+                    imageUrl: imageUpload.Location,
+                    backgroundUrl,
+                    styles,
+                    userId: session.user.id, // Store supplier ID
+                    status: 'pending',
+                };
+            
+                // Upload product data to S3
+                await uploadFileToS3(
+                    `${productKey}/product.json`, 
+                    JSON.stringify(productInfo), 
+                    'application/json'
+                );
+            
+                // ✅ Add MongoDB request 
+                fetch('/api/products/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productInfo),
+                }).catch(error => console.error('Failed to save product in MongoDB:', error));
+            
+               
+                setShowSuccessModal(true);
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    setError(`Failed to upload product: ${err.message}`);
+                } else {
+                    setError('Failed to upload product due to an unknown error');
+                }
+            }            
+            
             // Save backside info to a separate JSON file
             // Fetch existing backside info
         const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
