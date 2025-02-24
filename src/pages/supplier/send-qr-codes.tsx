@@ -96,70 +96,70 @@ const SendQRCodesPage = () => {
         );
     };
 
-    const handleSubmit = async () => {
-      try {
-          const supplierName = session?.user.name?.replace(/\s+/g, '-').toLowerCase() ?? '';
-          const selectedProductData = products.filter(product => selectedProducts.includes(product.name));
-
-          for (const product of selectedProductData) {
-              for (const store of selectedStores) {
-                  const storeIdentifier = `${store.storeName.replace(/\s+/g, '-').toLowerCase()}-${store.storeNumber}`;
-
-                  console.log("🚀 Assigning Product:", product);
-                  console.log("Product ID:", product._id);
-                  console.log("Store ID:", storeIdentifier);
-
-                  if (!product._id) {
-                      console.error("❌ Error: Product ID is missing", product);
-                      continue; // Skip this product if `_id` is missing
-                  }
-
-                  // ✅ First, update MongoDB with storeId
-                  const assignSuccess = await assignProductToStore(product._id, storeIdentifier);
-                  if (!assignSuccess) {
-                      console.error(`Failed to assign product ${product.name} to store ${storeIdentifier}`);
-                      continue; // Skip QR generation if assignment fails
-                  }
-
-                  // ✅ Then, generate the QR code
-                  console.log("🚀 Generating QR Code for Product:", product.name);
-                  console.log("Supplier Name:", supplierName);
-                  console.log("Store Identifier:", storeIdentifier);
-
-                  if (!supplierName) console.error("❌ ERROR: supplierName is undefined!");
-                  if (!storeIdentifier) console.error("❌ ERROR: storeIdentifier is undefined!");
-
-                  const qrCodeURL = `${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${supplierName}/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
-
-                  const qrCodeDataUrl = await QRCode.toDataURL(qrCodeURL, { errorCorrectionLevel: 'high' });
-
-                  const response = await fetch(qrCodeDataUrl);
-                  const blob = await response.blob();
-                  const arrayBuffer = await blob.arrayBuffer();
-                  const buffer = Buffer.from(arrayBuffer);
-
-                  const productFolder = `suppliers/${supplierName}/stores/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
-                  const qrCodeKey = `${productFolder}/${product.name.replace(/\s+/g, '-').toLowerCase()}.svg`;
-                  const productInfoKey = `${productFolder}/info.json`;
-
-                  const productInfo = {
-                      productName: product.name.replace(/\s+/g, '-').toLowerCase(),
-                      supplierName,
-                      storeUsername: store.name.replace(/\s+/g, '-').toLowerCase(),
-                      storeName: store.storeName.replace(/\s+/g, '-').toLowerCase(),
-                      storeNumber: store.storeNumber.replace(/\s+/g, '-').toLowerCase(),
-                  };
-
-                  await uploadFileToS3(qrCodeKey, buffer, 'image/svg+xml');
-                  await uploadFileToS3(productInfoKey, JSON.stringify(productInfo), 'application/json');
-              }
-          }
-
-          alert('QR codes sent and products assigned successfully!');
-      } catch (err) {
-          setError('Failed to send QR codes: ' + err);
-      }
-  };
+        const handleSubmit = async () => {
+        try {
+            const supplierName = session?.user.name?.replace(/\s+/g, '-').toLowerCase() ?? '';
+            const selectedProductData = products.filter(product => selectedProducts.includes(product.name));
+    
+            for (const product of selectedProductData) {
+                for (const store of selectedStores) {
+                    const storeIdentifier = `${store.storeName.replace(/\s+/g, '-').toLowerCase()}-${store.storeNumber}`;
+    
+                    console.log("🚀 Assigning Product:", product);
+                    console.log("Product ID:", product._id);
+                    console.log("Store ID:", storeIdentifier);
+    
+                    if (!product._id) {
+                        console.error("❌ Error: Product ID is missing", product);
+                        continue; // Skip this product if `_id` is missing
+                    }
+    
+                    // ✅ First, update MongoDB with storeId
+                    const assignResult = await assignProductToStore(product._id, storeIdentifier);
+                    if (assignResult === false) {
+                        console.error(`Failed to assign product ${product.name} to store ${storeIdentifier}`);
+                        continue; // Skip QR generation if assignment fails
+                    }
+    
+                    // ✅ Then, generate the QR code
+                    console.log("🚀 Generating QR Code for Product:", product.name);
+                    console.log("Supplier Name:", supplierName);
+                    console.log("Store Identifier:", storeIdentifier);
+    
+                    if (!supplierName) console.error("❌ ERROR: supplierName is undefined!");
+                    if (!storeIdentifier) console.error("❌ ERROR: storeIdentifier is undefined!");
+    
+                    const qrCodeURL = `${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${supplierName}/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
+    
+                    const qrCodeDataUrl = await QRCode.toDataURL(qrCodeURL, { errorCorrectionLevel: 'high' });
+    
+                    const response = await fetch(qrCodeDataUrl);
+                    const blob = await response.blob();
+                    const arrayBuffer = await blob.arrayBuffer();
+                    const buffer = Buffer.from(arrayBuffer);
+    
+                    const productFolder = `suppliers/${supplierName}/stores/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
+                    const qrCodeKey = `${productFolder}/${product.name.replace(/\s+/g, '-').toLowerCase()}.svg`;
+                    const productInfoKey = `${productFolder}/info.json`;
+    
+                    const productInfo = {
+                        productName: product.name.replace(/\s+/g, '-').toLowerCase(),
+                        supplierName,
+                        storeUsername: store.name.replace(/\s+/g, '-').toLowerCase(),
+                        storeName: store.storeName.replace(/\s+/g, '-').toLowerCase(),
+                        storeNumber: store.storeNumber.replace(/\s+/g, '-').toLowerCase(),
+                    };
+    
+                    await uploadFileToS3(qrCodeKey, buffer, 'image/svg+xml');
+                    await uploadFileToS3(productInfoKey, JSON.stringify(productInfo), 'application/json');
+                }
+            }
+    
+            alert('QR codes sent and products assigned successfully!');
+        } catch (err) {
+            setError('Failed to send QR codes: ' + err);
+        }
+    };
 
 
 const assignProductToStore = async (productId: string, storeId: string) => {
@@ -176,6 +176,9 @@ const assignProductToStore = async (productId: string, storeId: string) => {
         console.log("✅ Assign API Response:", data); // Log API response
 
         if (!response.ok) {
+            if (data.error === 'Product not found or already assigned') {
+                return 'already-assigned';
+            }
             throw new Error(data.error || 'Failed to assign product');
         }
 
