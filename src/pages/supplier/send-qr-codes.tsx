@@ -4,7 +4,8 @@ import Navbar from '@/components/Navbar/Navbar';
 import { listFilesInS3, fetchProductDataFromS3, uploadFileToS3 } from '@/lib/s3';
 import { Product } from '@/types';
 import { QRCodeCanvas } from 'qrcode.react';
-import QRCode from 'qrcode';
+import QRCodeSVG from 'qrcode-svg';
+import styles from '@/styles/send-qr.module.css';
 
 const SendQRCodesPage = () => {
     const { data: session } = useSession();
@@ -96,7 +97,7 @@ const SendQRCodesPage = () => {
         );
     };
 
-        const handleSubmit = async () => {
+    const handleSubmit = async () => {
         try {
             const supplierName = session?.user.name?.replace(/\s+/g, '-').toLowerCase() ?? '';
             const selectedProductData = products.filter(product => selectedProducts.includes(product.name));
@@ -125,33 +126,42 @@ const SendQRCodesPage = () => {
                     console.log("🚀 Generating QR Code for Product:", product.name);
                     console.log("Supplier Name:", supplierName);
                     console.log("Store Identifier:", storeIdentifier);
-    
+                    
                     if (!supplierName) console.error("❌ ERROR: supplierName is undefined!");
                     if (!storeIdentifier) console.error("❌ ERROR: storeIdentifier is undefined!");
-    
+                    
                     const qrCodeURL = `${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${supplierName}/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
-    
-                    const qrCodeDataUrl = await QRCode.toDataURL(qrCodeURL, { errorCorrectionLevel: 'high' });
-    
-                    const response = await fetch(qrCodeDataUrl);
-                    const blob = await response.blob();
-                    const arrayBuffer = await blob.arrayBuffer();
-                    const buffer = Buffer.from(arrayBuffer);
-    
-                    const productFolder = `suppliers/${supplierName}/stores/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
-                    const qrCodeKey = `${productFolder}/${product.name.replace(/\s+/g, '-').toLowerCase()}.svg`;
-                    const productInfoKey = `${productFolder}/info.json`;
-    
-                    const productInfo = {
-                        productName: product.name.replace(/\s+/g, '-').toLowerCase(),
-                        supplierName,
-                        storeUsername: store.name.replace(/\s+/g, '-').toLowerCase(),
-                        storeName: store.storeName.replace(/\s+/g, '-').toLowerCase(),
-                        storeNumber: store.storeNumber.replace(/\s+/g, '-').toLowerCase(),
-                    };
-    
-                    await uploadFileToS3(qrCodeKey, buffer, 'image/svg+xml');
-                    await uploadFileToS3(productInfoKey, JSON.stringify(productInfo), 'application/json');
+                    
+                    try {
+                        const qr = new QRCodeSVG({
+                            content: qrCodeURL,
+                            padding: 4,
+                            width: 256,
+                            height: 256,
+                            color: "#000000",
+                            background: "#ffffff",
+                            ecl: "H"
+                        });
+                        const qrCodeSVG = qr.svg();
+                        const qrCodeBuffer = Buffer.from(qrCodeSVG, 'utf-8'); // Convert SVG string to buffer
+                    
+                        const productFolder = `suppliers/${supplierName}/stores/${storeIdentifier}/${product.name.replace(/\s+/g, '-').toLowerCase()}`;
+                        const qrCodeKey = `${productFolder}/${product.name.replace(/\s+/g, '-').toLowerCase()}.svg`;
+                        const productInfoKey = `${productFolder}/info.json`;
+                    
+                        const productInfo = {
+                            productName: product.name.replace(/\s+/g, '-').toLowerCase(),
+                            supplierName,
+                            storeUsername: store.name.replace(/\s+/g, '-').toLowerCase(),
+                            storeName: store.storeName.replace(/\s+/g, '-').toLowerCase(),
+                            storeNumber: store.storeNumber.replace(/\s+/g, '-').toLowerCase(),
+                        };
+                    
+                        await uploadFileToS3(qrCodeKey, qrCodeBuffer, 'image/svg+xml');
+                        await uploadFileToS3(productInfoKey, JSON.stringify(productInfo), 'application/json');
+                    } catch (qrError) {
+                        console.error('Error generating or uploading QR Code:', qrError);
+                    }
                 }
             }
     
@@ -161,40 +171,38 @@ const SendQRCodesPage = () => {
         }
     };
 
+    // Function to assign a product to a store in MongoDB
+    const assignProductToStore = async (productId: string, storeId: string) => {
+        try {
+            console.log("🚀 Assigning product:", productId, "to store:", storeId); // Debugging output
 
-const assignProductToStore = async (productId: string, storeId: string) => {
-    try {
-        console.log("🚀 Assigning product:", productId, "to store:", storeId); // Debugging output
+            const response = await fetch('/api/products/assign', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ productId, storeId }),
+            });
 
-        const response = await fetch('/api/products/assign', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ productId, storeId }),
-        });
+            const data = await response.json();
+            console.log("✅ Assign API Response:", data); // Log API response
 
-        const data = await response.json();
-        console.log("✅ Assign API Response:", data); // Log API response
-
-        if (!response.ok) {
-            if (data.error === 'Product not found or already assigned') {
-                return 'already-assigned';
+            if (!response.ok) {
+                if (data.error === 'Product not found or already assigned') {
+                    return 'already-assigned';
+                }
+                throw new Error(data.error || 'Failed to assign product');
             }
-            throw new Error(data.error || 'Failed to assign product');
-        }
 
-        return true;
-    } catch (error) {
-        console.error('❌ Error assigning product:', error);
-        if (error instanceof Error) {
-            alert(`Error: ${error.message}`);
-        } else {
-            alert('An unknown error occurred');
+            return true;
+        } catch (error) {
+            console.error('❌ Error assigning product:', error);
+            if (error instanceof Error) {
+                alert(`Error: ${error.message}`);
+            } else {
+                alert('An unknown error occurred');
+            }
+            return false;
         }
-        return false;
-    }
-};
-
-    
+    };
 
     return (
         <div>
@@ -203,7 +211,7 @@ const assignProductToStore = async (productId: string, storeId: string) => {
                 <h1 className="text-2xl font-bold mb-4">Send QR Codes</h1>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
+                    <div className={`${styles.scrollableSection}`}>
                         <h2 className="text-xl font-bold mb-2">Select Products</h2>
                         {products.map((product, index) => (
                             <div key={index} className="flex items-center mb-2">
@@ -218,7 +226,7 @@ const assignProductToStore = async (productId: string, storeId: string) => {
                             </div>
                         ))}
                     </div>
-                    <div>
+                    <div className={`${styles.scrollableSection}`}>
                         <h2 className="text-xl font-bold mb-2">Select Stores</h2>
                         {stores.map((store, index) => (
                             <div key={index} className="flex items-center mb-2">
@@ -259,7 +267,7 @@ const assignProductToStore = async (productId: string, storeId: string) => {
                 </div>
                 <button
                     onClick={handleSubmit}
-                    className="fixed bottom-4 left-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    className="fixed bottom-4 left-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                 >
                     Send QR Codes
                 </button>

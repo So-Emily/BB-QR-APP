@@ -29,13 +29,11 @@ const DownloadQRCodesPage = () => {
 
         const fetchQRCodes = async () => {
             try {
-                // console.log('Session data:', session);
                 const userResponse = await fetch(`/api/user`);
                 if (!userResponse.ok) {
                     throw new Error('Failed to fetch user details');
                 }
                 const userData = await userResponse.json();
-                // console.log('User Data:', userData);
 
                 const storeDetails = userData.storeDetails;
                 console.log('Store Details:', storeDetails);
@@ -121,6 +119,24 @@ const DownloadQRCodesPage = () => {
         saveAs(content, 'qr-codes.zip');
     };
 
+    const handleDownload = async (qrCode: QRCode) => {
+        try {
+            const response = await fetch(qrCode.signedUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `${qrCode.productName}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Failed to download QR code:', err);
+            setError('Failed to download QR code: ' + err);
+        }
+    };
+
     return (
         <div>
             <Navbar />
@@ -149,13 +165,12 @@ const DownloadQRCodesPage = () => {
                                     View Product Page
                                 </button>
                             </Link>
-                            <a
-                                href={qrCode.signedUrl}
-                                download={`${qrCode.productName}.svg`}
+                            <button
+                                onClick={() => handleDownload(qrCode)}
                                 className="mt-2 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
                             >
                                 Download QR Code
-                            </a>
+                            </button>
                         </div>
                     ))}
                 </div>

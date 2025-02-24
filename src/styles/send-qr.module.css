@@ -1,0 +1,24 @@
+.scrollableSection {
+    max-height: 510px;
+    overflow-y: auto;
+    padding-right: 1rem;
+    background-color: #f0f0f0; /* Lighter grey background */
+    border-radius: 0.5rem; /* Rounded corners */
+    margin-bottom: 1rem; /* Space between sections */
+    padding: 1rem; /* Padding inside the sections */
+    color: #333; /* Darker grey text color */
+}
+
+.scrollableSection::-webkit-scrollbar {
+    width: 8px;
+}
+
+.scrollableSection::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 0.5rem; /* Rounded corners for the scrollbar thumb */
+}
+
+.scrollableSection::-webkit-scrollbar-track {
+    background-color: #f0f0f0;
+    border-radius: 0.5rem; /* Rounded corners for the scrollbar track */
+}
