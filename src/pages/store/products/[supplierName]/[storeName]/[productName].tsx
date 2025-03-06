@@ -5,6 +5,9 @@ import Card from '@/components/Card/Card';
 import styles from '@/components/Card/Card.module.css';
 import { useEffect, useState } from 'react';
 import { Product } from '@/types';
+import ProductModel from '@/models/Product';
+import { connectToDatabase } from '@/lib/mongodb';
+
 
 interface StoreProductPageProps {
     product: Product;
@@ -21,32 +24,35 @@ const StoreProductPage = ({ product, supplierName, storeName, backsideInfo }: St
     const [error, setError] = useState('');
 
     // Track scan count when the page loads
-    useEffect(() => {
-        const trackScan = async () => {
-            if (!product._id) {
-                console.error('Product ID is missing. Cannot track scan count.');
-                return;
+useEffect(() => {
+    const trackScan = async () => {
+        if (!product || !product._id) {  // ✅ Make sure product exists before accessing _id
+            console.warn('⚠️ Product ID is missing or product is undefined. Skipping scan tracking.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/scans/${product._id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to track scan count.');
             }
 
-            try {
-                const response = await fetch(`/api/scans/${product._id}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                });
+            console.log(`✅ Scan tracked for product: ${product._id}`);
+        } catch (err) {
+            console.error('❌ Error tracking scan count:', err);
+            setError('Failed to track scan count.');
+        }
+    };
 
-                if (!response.ok) {
-                    throw new Error('Failed to track scan count.');
-                }
-
-                console.log(`Scan tracked for product: ${product._id}`);
-            } catch (err) {
-                console.error('Error tracking scan count:', err);
-                setError('Failed to track scan count.');
-            }
-        };
-
+    if (product && product._id) {  // ✅ Prevents errors by only running when product is ready
         trackScan();
-    }, [product._id]);
+    }
+}, [product]);  // ✅ Changed dependency from `product._id` to `product` to ensure it's ready
+
 
     if (!product) {
         return <div>Product not found</div>;
@@ -120,18 +126,53 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     const { supplierName, storeName, productName } = context.params as { supplierName: string; storeName: string; productName: string };
 
     try {
-        // Increment the scan count
+        await connectToDatabase();
+
+        console.log("🔍 Fetching product from MongoDB with top-level storeId:", { productName, storeName });
+
+        // ✅ Format product name correctly
+        const formattedProductName = productName.replace(/-/g, " ");
+
+        console.log("🛠 Querying MongoDB with:", { 
+            name: formattedProductName, 
+            storeId: storeName 
+        });
+
+        // ✅ Find the product using storeId as a top-level field
+        const product = await ProductModel.findOne(
+            { 
+                name: { $regex: new RegExp(`^${formattedProductName}$`, "i") }, 
+                storeId: storeName 
+            }
+        );
+
+        console.log("📋 Product from DB:", product);
+
+        if (!product) {
+            console.error(`❌ Product not found in DB for ${formattedProductName} at ${storeName}`);
+            return { props: { product: null, error: "Product not found" } };
+        }
+
+        console.log(`✅ Found Product: ${product.name} with Store ID: ${product.storeId}`);
+
+        // 🔹 NEW: Send scan request to increment scan count
+        console.log("📤 Sending scan request with:", { 
+            supplierName, 
+            productName: formattedProductName, 
+            storeId: product.storeId 
+        });
+
         await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/increment-scan`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ supplierName, productName }),
+            body: JSON.stringify({ 
+                supplierName, 
+                productName: formattedProductName, 
+                storeId: product.storeId 
+            }),
         });
 
-        console.log(`Supplier Name: ${supplierName}`);
-        console.log(`Store Name: ${storeName}`);
-        console.log(`Product Name: ${productName}`);
-
-        // Fetch product data from S3
+        // ✅ Fetch product data from S3
         const productData = await fetchProductDataFromS3(`suppliers/${supplierName}/products/${productName}/product.json`);
         const backsideInfoKey = `suppliers/${supplierName}/backsideInfo.json`;
         let backsideInfo = { description: '', message: '' };
@@ -146,6 +187,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             props: {
                 product: productData,
                 storeName,
+                storeId: product.storeId, // ✅ Pass storeId to the page
                 supplierName,
                 backsideInfo,
             },
@@ -159,5 +201,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         };
     }
 };
+
+
+
 
 export default StoreProductPage;

@@ -20,5 +20,3 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.status(500).json({ error: 'Failed to fetch products' });
     }
 }
-
-// this file just pulls product data from mongo

@@ -21,4 +21,5 @@ export interface Product {
     };
     status?: 'pending' | 'assigned';
     scanCount?: number;
+    storeId?: string;
 }
