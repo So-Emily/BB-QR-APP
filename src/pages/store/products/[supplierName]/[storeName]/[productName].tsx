@@ -141,10 +141,21 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         // ✅ Find the product using storeId as a top-level field
         const product = await ProductModel.findOne(
             { 
-                name: { $regex: new RegExp(`^${formattedProductName}$`, "i") }, 
-                storeId: storeName 
+                name: { $regex: new RegExp(`^${formattedProductName}$`, "i") }
             }
         );
+        
+        // ✅ Extract storeId from the stores array
+        const storeDetails = product?.stores.find((store: { storeId: string; }) => store.storeId === storeName);
+        const storeId = storeDetails ? storeDetails.storeId : null;
+        
+        if (!storeId) {
+            console.error(`❌ Store '${storeName}' not found for product '${productName}'`);
+            return { props: { product: null, error: "Store not found" } };
+        }
+        
+        console.log(`✅ Found Product: ${product.name} with Store ID: ${storeId}`);
+        
 
         console.log("📋 Product from DB:", product);
 
@@ -159,7 +170,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
         console.log("📤 Sending scan request with:", { 
             supplierName, 
             productName: formattedProductName, 
-            storeId: product.storeId 
+            storeId: storeId 
+
         });
 
         await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/increment-scan`, {
@@ -168,7 +180,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             body: JSON.stringify({ 
                 supplierName, 
                 productName: formattedProductName, 
-                storeId: product.storeId 
+                storeId: storeId 
+ 
             }),
         });
 
@@ -187,7 +200,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             props: {
                 product: productData,
                 storeName,
-                storeId: product.storeId, // ✅ Pass storeId to the page
+                storeId: storeId,
                 supplierName,
                 backsideInfo,
             },

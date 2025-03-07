@@ -1,7 +1,6 @@
 import { connectToDatabase } from '@/lib/mongodb';
-import Product from '@/models/Product';
+import ProductModel from '@/models/Product';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { ObjectId } from 'mongodb';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method !== 'POST') {
@@ -19,21 +18,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
         await connectToDatabase();
 
-        console.log("🚀 Attempting to assign product:", productId, "to store:", storeId);
+        console.log("🚀 Assigning product:", productId, "to store:", storeId);
 
-        const updatedProduct = await Product.findOneAndUpdate(
-            { _id: new ObjectId(productId), status: 'pending' }, // Ensure it's pending
-            { $set: { storeId: storeId, status: 'assigned' } }, 
-            { new: true }
-        );
-
-        if (!updatedProduct) {
-            console.error("❌ Product not found or already assigned:", productId);
-            return res.status(400).json({ error: 'Product not found or already assigned' });
+        // ✅ Fetch product and ensure `stores` array exists
+        const existingProduct = await ProductModel.findById(productId);
+        if (!existingProduct) {
+            console.error("❌ Product not found:", productId);
+            return res.status(400).json({ error: 'Product not found' });
         }
 
-        console.log("✅ Product assigned successfully:", updatedProduct);
-        res.status(200).json({ message: 'Product assigned to store', product: updatedProduct });
+        if (!existingProduct.stores) {
+            existingProduct.stores = []; // ✅ Ensure stores array exists
+        }
+
+        // ✅ Prevent duplicate store entries
+        const storeExists = existingProduct.stores.some((store: { storeId: string; }) => store.storeId === storeId);
+        if (storeExists) {
+            console.warn(`⚠️ Store ${storeId} is already assigned to product ${productId}`);
+            return res.status(400).json({ error: 'Store already assigned' });
+        }
+
+        // ✅ Push new store entry into the stores array
+        existingProduct.stores.push({ 
+            storeId, 
+            scanCount: 0, 
+            lastScannedAt: null 
+        });
+        existingProduct.status = "assigned";
+
+        await existingProduct.save(); // ✅ Save changes to MongoDB
+
+        console.log("✅ Product assigned to store successfully:", existingProduct);
+        res.status(200).json({ message: 'Product assigned to store', product: existingProduct });
 
     } catch (error) {
         console.error('❌ Error assigning product:', error);

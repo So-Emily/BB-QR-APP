@@ -16,22 +16,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
         await connectToDatabase();
-        const matchingProducts = await ProductModel.find({ 
-          name: { $regex: new RegExp(`^${productName}$`, "i") } // ✅ Case-insensitive search
-      });
-        console.log("🔍 Products found in DB for name:", productName, matchingProducts);
-        // 🔹 FIXED: Query now updates the `stores` array
+
+        console.log("🔍 Searching for product with store:", { productName, storeId });
+
+        // ✅ Find and update the correct store inside the `stores` array
         const updatedProduct = await ProductModel.findOneAndUpdate(
-          { 
-              name: { $regex: new RegExp(`^${productName}$`, "i") }, // ✅ Case-insensitive match
-              storeId: storeId 
-          },
-          { 
-              $inc: { scanCount: 1 },
-              $set: { lastScannedAt: new Date() }
-          },
-          { new: true }
-      );
+            { 
+                name: { $regex: new RegExp(`^${productName}$`, "i") }, // ✅ Case-insensitive match
+                "stores.storeId": storeId // ✅ Ensure we are updating the correct store entry
+            },
+            { 
+                $inc: { "stores.$.scanCount": 1 }, // ✅ Increment scanCount only for the matching store
+                $set: { "stores.$.lastScannedAt": new Date() } // ✅ Update timestamp for this store
+            },
+            { new: true }
+        );
 
         if (!updatedProduct) {
             console.error(`❌ Product '${productName}' not found for store '${storeId}'`);
