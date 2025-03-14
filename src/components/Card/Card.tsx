@@ -1,19 +1,25 @@
-// src/components/Card/Card.tsx
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
+import { FaRegCommentDots, FaRegCalendarAlt } from 'react-icons/fa';
 import styles from './Card.module.css';
 
 interface CardProps {
-    frontContent: React.ReactNode;
-    backContent: React.ReactNode;
-    backgroundUrl: string;
+    frontContent?: React.ReactNode;
+    backgroundUrl?: string;
     imageUrl: string;
     additionalContent?: React.ReactNode;
     supplierName: string;
-    cardStyles: { textColor: string; bodyColor: string; borderColor: string }; // Add cardStyles prop
+    cardStyles: { textColor: string; bodyColor: string; borderColor: string };
+    location?: { city?: string; state?: string; country?: string };
+    pairing?: string[];
+    taste?: string[];
+    productName: string;
+    productDescription: string;
+    backsideDescription: string;
+    backsideMessage: string;
 }
 
-const Card = ({ frontContent, backContent, backgroundUrl, imageUrl, additionalContent, supplierName, cardStyles }: CardProps) => {
+const Card = ({ backgroundUrl, imageUrl, additionalContent, supplierName, cardStyles, location, pairing, taste, productName, productDescription, backsideDescription, backsideMessage }: CardProps) => {
     const [flipped, setFlipped] = useState(false);
 
     const handleCardClick = () => {
@@ -24,38 +30,92 @@ const Card = ({ frontContent, backContent, backgroundUrl, imageUrl, additionalCo
         event.stopPropagation();
     };
 
+    const formatLocation = (location?: { city?: string; state?: string; country?: string }) => {
+        if (!location) return '';
+        const parts = [location.city, location.state, location.country].filter(Boolean);
+        return parts.join(', ');
+    };
+
+    const capitalizeWords = (str: string) => {
+        return str.replace(/\b\w/g, char => char.toUpperCase());
+    };
+
     return (
-        <div className={styles.card} onClick={handleCardClick}>
+        <div className={styles.card} onClick={handleCardClick} style={{ '--card-border-color': cardStyles.borderColor } as React.CSSProperties}>
             <div className={`${styles.cardInner} ${flipped ? styles.flipped : ''}`}>
-                <div className={styles.cardFront} style={{ backgroundColor: cardStyles.bodyColor, color: cardStyles.textColor, borderColor: cardStyles.borderColor }}>
+                <div className={styles.cardFront} style={{ backgroundColor: cardStyles.bodyColor, color: cardStyles.textColor }}>
                     <div className={styles.backgroundImageContainer}>
                         {backgroundUrl && (
                             <Image
                                 src={backgroundUrl}
                                 alt="Background"
-                                fill
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                style={{ objectFit: 'cover' }}
+                                layout="fill"
+                                objectFit="cover"
                             />
                         )}
                         <div className={styles.productImageContainer}>
                             <Image
                                 src={imageUrl}
                                 alt="Product"
-                                className={styles.productImage}
-                                fill
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                layout="intrinsic"
+                                width={200}
+                                height={200}
+                                objectFit="contain"
                             />
                         </div>
                     </div>
+
+                    {/* Front Of Card Info */}
                     <div className={styles.frontContent}>
-                        {frontContent}
+                        <h1 className="text-xl font-bold">{productName}</h1>
+                        <strong className={`text-sm ${styles.descriptionLabel}`}>Description</strong>
+                        <p className={`text-sm ${styles.descriptionText}`}>{productDescription}</p>
+                        <div className={styles.infoRow}>
+                            {pairing && pairing.length > 0 && (
+                                <div className={styles.infoColumn}>
+                                    <strong>Pairing</strong>
+                                    <ul className={styles.pairingList}>
+                                        {pairing.map((item, index) => (
+                                            <li key={index}>{item}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {location && (location.city || location.state || location.country) && (
+                                <div className={styles.infoColumn}>
+                                    <strong>Origin</strong>
+                                    <div>{formatLocation(location)}</div>
+                                </div>
+                            )}
+                            {taste && taste.length > 0 && (
+                                <div className={styles.infoColumn}>
+                                    <strong>Taste</strong>
+                                    <ul className={styles.tasteList}>
+                                        {taste.map((item, index) => (
+                                            <li key={index}>{item}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-                <div className={styles.cardBack} style={{ backgroundColor: cardStyles.bodyColor, color: cardStyles.textColor, borderColor: cardStyles.borderColor }}>
-                    {backContent}
-                    <div className={styles.supplierInfo}>
-                        From the supplier of {supplierName}
+
+                {/* Back of Card Info */}
+                <div className={styles.cardBack} style={{ backgroundColor: cardStyles.bodyColor, color: cardStyles.textColor }}>
+                    <div className="p-4">
+                        <h2 className="text-xl font-bold">Welcome from your supplier</h2>
+                        <h1 className="text-2xl font-bold">{capitalizeWords(supplierName)}</h1>
+                        <p className="mt-4">{backsideDescription}</p>
+                        <div className="flex justify-center mt-4">
+                            <FaRegCommentDots size={37} />
+                        </div>
+                        
+                        <p className="mt-4"><em>&quot;{backsideMessage}&quot;</em></p>
+                        <div className="flex justify-center mt-4">
+                            <FaRegCalendarAlt size={37} />
+                        </div>
+                        <p className="mt-4">Rescan the QR codes or visit here again during holidays or public events for updated themes and messages!</p>
                     </div>
                 </div>
             </div>

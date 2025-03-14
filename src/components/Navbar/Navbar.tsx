@@ -45,6 +45,11 @@ const Navbar = () => {
                                 <span role="link" className={styles.navItem}>Download QR Codes</span>
                             </Link>
                         </li>
+                        <li>
+                            <Link href="/store/print-qrcodes" passHref>
+                                <span role="link" className={styles.navItem}>Print QR Codes</span>
+                            </Link>
+                        </li>
                     </>
                 )}
                 <li className={styles.rightAligned}>

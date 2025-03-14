@@ -1,4 +1,3 @@
-// src/pages/supplier/view-products.tsx
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar/Navbar';
@@ -103,54 +102,20 @@ const ViewProductsPage = () => {
                     {products.map((product, index) => (
                         <Card
                             key={index}
-                            frontContent={
-                                <div className="p-4">
-                                    <h1 className="text-2xl font-bold">{product.name}</h1>
-                                    <p>{product.description}</p>
-                                    <div className={cardStyles.infoRow}>
-                                        {product.pairing.length > 0 && (
-                                            <div className={cardStyles.infoColumn}>
-                                                <strong>Pairing:</strong>
-                                                <div>{product.pairing.join(' ')}</div>
-                                            </div>
-                                        )}
-                                        {product.location && (
-                                            <div className={cardStyles.infoColumn}>
-                                                <strong>Origin:</strong>
-                                                <div>
-                                                    {product.location.city && `${product.location.city}`}
-                                                    {product.location.city && product.location.state && `, `}
-                                                    {product.location.state && `${product.location.state}`}
-                                                    {(product.location.city || product.location.state) && product.location.country && `, `}
-                                                    {product.location.country}
-                                                </div>
-                                            </div>
-                                        )}
-                                        {product.taste.length > 0 && (
-                                            <div className={cardStyles.infoColumn}>
-                                                <strong>Taste:</strong>
-                                                <div>{product.taste.join(' ')}</div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            }
-                            backContent={
-                                <div className="p-4">
-                                    <h2 className="text-xl font-bold">Welcome from</h2>
-                                    <h1 className="text-2xl font-bold">{supplierName}</h1>
-
-                                    <label className="text-sm">Description:</label>
-                                    <p>{backsideInfo.description}</p>
-
-                                    <label className="text-sm">Message:</label>
-                                    <p>{backsideInfo.message} </p>
-                                </div>
-                            }
+                            // Pushing all the props to Card.tsx
+                            productName={product.name}
+                            productDescription={product.description || ''}
                             backgroundUrl={product.backgroundUrl}
                             imageUrl={product.imageUrl}
-                            supplierName={supplierName} // Pass formatted supplierName prop
-                            cardStyles={product.styles} // Pass card styles
+                            supplierName={supplierName}
+                            cardStyles={product.styles}
+                            location={product.location}
+                            pairing={product.pairing}
+                            taste={product.taste}
+                            backsideDescription={backsideInfo.description}
+                            backsideMessage={backsideInfo.message}
+
+                            //Additional Buttons Below card in View Products
                             additionalContent={
                                 <div className="flex justify-between">
                                     <Link href={`/supplier/products/${session.user.name?.replace(/\s+/g, '-').toLowerCase()}/${product.name.replace(/\s+/g, '-').toLowerCase()}`} passHref>

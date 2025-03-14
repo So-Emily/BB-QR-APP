@@ -1,11 +1,11 @@
-/* src/components/Card/Card.module.css */
 .card {
     perspective: 1000px;
     cursor: pointer;
-    width: 300px; /* Set a fixed width */
-    height: 450px; /* Adjust the height to accommodate the buttons */
-    margin-bottom: 60px; /* Reduce margin to fit more cards in a row */
-    border-radius: 15px; /* Ensure the border radius is consistent */
+    width: 320px; 
+    height: 500px; 
+    margin-bottom: 60px;
+    border-radius: 10px;
+    --card-border-color: inherit; /* Define CSS variable for border color */
 }
 
 .cardInner {
@@ -14,6 +14,8 @@
     height: 100%;
     transition: transform 0.6s;
     transform-style: preserve-3d;
+    border: 4px solid var(--card-border-color); /* Use CSS variable for border color */
+    border-radius: 10px;
 }
 
 .flipped {
@@ -25,14 +27,13 @@
     width: 100%;
     height: 100%;
     backface-visibility: hidden;
-    border-radius: 15px;
+    border-radius: 5px;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start; /* Align items to the top */
+    justify-content: flex-start;
     align-items: center;
-    text-align: center; /* Center the text */
-    border: 4px solid; /* Increase border thickness */
+    text-align: center;
 }
 
 .cardFront {
@@ -49,38 +50,101 @@
 .backgroundImageContainer {
     position: relative;
     width: 100%;
-    height: 150px; /* Adjust the height as needed */
+    height: 58%; /* Adjust height of background image on card */
     overflow: hidden;
-    margin-top: 0; /* Remove any margin above the image */
+    border-bottom: 4px solid var(--card-border-color); /* Use CSS variable for border color */
 }
 
 .productImageContainer {
-    position: relative;
-    width: 100%;
-    height: 150px; /* Ensure the height is set */
-    overflow: hidden;
-}
-
-.productImage {
-    width: 100%;
-    height: 100%;
-    object-fit: contain; /* Ensure the image fits within the container */
+    position: absolute;
+    top: 54%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 59%; /* Set width relative to the background image container */
+    height: auto; /* Maintain aspect ratio */
+    max-height: 100%; /* Ensure the product image does not exceed the background image height */
 }
 
 .frontContent {
-    padding: 16px;
+    padding: 5px;
+    width: 100%;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* Font size of all text below product name (front) */
+.descriptionLabel,
+.descriptionText, .infoRow {
+    font-size: 0.7rem;
+}
+
+.descriptionLabel,
+.descriptionText {
+    text-align: left;
+    width: 100%;
+}
+
+.descriptionLabel{
+    padding-top:2px;
+}
+
+.pairingList,
+.tasteList {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    text-align: center; /* Center align the list items */
+}
+
+.pairingList li,
+.tasteList li {
+    margin-bottom: 1px; /* Add space between list items */
+}
+
+.infoRow {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.infoColumn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 33%;
+    position: relative;
+}
+
+.infoColumn strong {
+    position: relative;
+    margin-bottom: 8px; /* Space between the section title and the underline */
+}
+
+.infoColumn strong::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; /* Adjust the position of the underline */
+    left: 50%; /* Center the underline */
+    transform: translateX(-50%); /* Center the underline */
+    width: 150%; /* Adjust the width of the underline */
+    height: 2px; /* Adjust the height of the underline */
+    background-color: currentColor; /* Use the current text color */
 }
 
 .additionalContent {
     display: flex;
-    justify-content: center; /* Center the buttons */
-    gap: 10px; /* Add some space between the buttons */
+    justify-content: center;
+    gap: 10px;
     padding: 8px 16px;
 }
 
 .button {
     padding: 8px 16px;
-    background-color: #d3d3d3; /* Change the button color to light grey */
+    background-color: #d3d3d3;
     color: black;
     border: none;
     border-radius: 5px;
@@ -93,31 +157,17 @@
 }
 
 .button:hover {
-    background-color: #a9a9a9; /* Darken the button color on hover */
+    background-color: #a9a9a9;
     color: white;
 }
 
-.infoRow {
-    display: flex;
-    justify-content: space-between; /* Distribute space evenly */
-    width: 100%;
-    font-size: 0.875rem; /* Make the text smaller */
-    margin-top: 16px; /* Add some space above the row */
-}
-
-.infoColumn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 33%; /* Ensure each column takes up equal space */
-}
-
 .supplierInfo {
-    margin-top: auto; /* Push the supplier info to the bottom */
+    margin-top: auto;
     padding: 16px;
     width: 100%;
     text-align: center;
-    /* color: black; */
-    /* background-color: #f8f8f8; */
-    /* border-top: 1px solid #ddd; */
+}
+
+.cardBack .text-sm.mt-4 {
+    margin-top: 16px; /* Add margin to move the description down */
 }

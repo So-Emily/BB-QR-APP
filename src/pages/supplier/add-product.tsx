@@ -10,8 +10,8 @@ const AddProductPage = () => {
     const [activeTab, setActiveTab] = useState('front');
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const [pairing, setPairing] = useState(['', '', '']);
-    const [taste, setTaste] = useState(['', '', '']); 
+    const [pairing, setPairing] = useState<string[]>([]);
+    const [taste, setTaste] = useState<string[]>([]);
     const [location, setLocation] = useState({ city: '', state: '', country: '' });
     const [image, setImage] = useState<File | null>(null);
     const [background, setBackground] = useState<File | null>(null);
@@ -19,9 +19,9 @@ const AddProductPage = () => {
     const [backsideDescription, setBacksideDescription] = useState('');
     const [backsideMessage, setBacksideMessage] = useState('');
     const [error, setError] = useState('');
-    const [imageName, setImageName] = useState(''); 
-    const [backgroundName, setBackgroundName] = useState(''); 
-    const [showSuccessModal, setShowSuccessModal] = useState(false); 
+    const [imageName, setImageName] = useState('');
+    const [backgroundName, setBackgroundName] = useState('');
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
     // Color Wheel
     const [showTextColorPicker, setShowTextColorPicker] = useState(false);
     const [showBodyColorPicker, setShowBodyColorPicker] = useState(false);
@@ -56,9 +56,6 @@ const AddProductPage = () => {
         const formattedProductName = normalizeName(name);
         const productKey = `suppliers/${formattedSupplierName}/products/${formattedProductName}`;
 
-        // console.log('productKey:', productKey);
-        // console.log('image.name:', image.name);
-
         try {
             const imageBuffer = await image.arrayBuffer();
             const imageUpload = await uploadFileToS3(`${productKey}/${image.name}`, Buffer.from(imageBuffer), image.type);
@@ -70,62 +67,50 @@ const AddProductPage = () => {
                 backgroundUrl = backgroundUpload.Location || '';
             }
 
-            try {
-                const productInfo = {
-                    name,
-                    description,
-                    pairing: pairing.filter(pair => pair !== ''),
-                    taste: taste.filter(t => t !== ''),
-                    location,
-                    imageUrl: imageUpload.Location,
-                    backgroundUrl,
-                    styles,
-                    userId: session.user.id, // Store supplier ID
-                    status: 'pending',
-                };
-            
-                // Upload product data to S3
-                await uploadFileToS3(
-                    `${productKey}/product.json`, 
-                    JSON.stringify(productInfo), 
-                    'application/json'
-                );
-            
-                // ✅ Add MongoDB request 
-                fetch('/api/products/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(productInfo),
-                }).catch(error => console.error('Failed to save product in MongoDB:', error));
-            
-               
-                setShowSuccessModal(true);
-            } catch (err: unknown) {
-                if (err instanceof Error) {
-                    setError(`Failed to upload product: ${err.message}`);
-                } else {
-                    setError('Failed to upload product due to an unknown error');
-                }
-            }            
-            
+            const productInfo = {
+                name,
+                description,
+                pairing: pairing.filter(pair => pair !== ''),
+                taste: taste.filter(t => t !== ''),
+                location,
+                imageUrl: imageUpload.Location,
+                backgroundUrl,
+                styles,
+                userId: session.user.id, // Store supplier ID
+                status: 'pending',
+            };
+
+            // Upload product data to S3
+            await uploadFileToS3(
+                `${productKey}/product.json`, 
+                JSON.stringify(productInfo), 
+                'application/json'
+            );
+
+            // ✅ Add MongoDB request 
+            fetch('/api/products/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(productInfo),
+            }).catch(error => console.error('Failed to save product in MongoDB:', error));
+
             // Save backside info to a separate JSON file
-            // Fetch existing backside info
-        const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
-        let existingBacksideInfo = {};
-        try {
-            existingBacksideInfo = await fetchProductDataFromS3(backsideInfoKey);
-        } catch (err) {
-            console.error('Failed to fetch existing backside info:', err);
-        }
+            const backsideInfoKey = `suppliers/${formattedSupplierName}/backsideInfo.json`;
+            let existingBacksideInfo = {};
+            try {
+                existingBacksideInfo = await fetchProductDataFromS3(backsideInfoKey);
+            } catch (err) {
+                console.error('Failed to fetch existing backside info:', err);
+            }
 
-        // Update backside info only if fields are not empty
-        const updatedBacksideInfo = {
-            ...existingBacksideInfo,
-            ...(backsideDescription && { description: backsideDescription }),
-            ...(backsideMessage && { message: backsideMessage }),
-        };
+            // Update backside info only if fields are not empty
+            const updatedBacksideInfo = {
+                ...existingBacksideInfo,
+                ...(backsideDescription && { description: backsideDescription }),
+                ...(backsideMessage && { message: backsideMessage }),
+            };
 
-        await uploadFileToS3(backsideInfoKey, JSON.stringify(updatedBacksideInfo), 'application/json');
+            await uploadFileToS3(backsideInfoKey, JSON.stringify(updatedBacksideInfo), 'application/json');
 
             // Show success modal
             setShowSuccessModal(true);
@@ -138,8 +123,8 @@ const AddProductPage = () => {
         // Reset form fields
         setName('');
         setDescription('');
-        setPairing(['', '', '']);
-        setTaste(['', '', '']);
+        setPairing([]);
+        setTaste([]);
         setLocation({ city: '', state: '', country: '' });
         setImage(null);
         setBackground(null);
@@ -154,6 +139,22 @@ const AddProductPage = () => {
 
     const handleGoToDashboard = () => {
         router.push('/supplier/dashboard');
+    };
+
+    const handleGoToProducts = () => {
+        router.push('/supplier/view-products');
+    };
+
+    const addPairing = () => {
+        if (pairing.length < 3) {
+            setPairing([...pairing, '']);
+        }
+    };
+
+    const addTaste = () => {
+        if (taste.length < 3) {
+            setTaste([...taste, '']);
+        }
     };
 
     return (
@@ -199,7 +200,7 @@ const AddProductPage = () => {
                                 className="w-full px-4 py-2 border rounded text-black"
                             />
                             <label className="block">Pairing</label>
-                            <div className="flex space-x-4">
+                            <div className="space-y-2">
                                 {pairing.map((pair, index) => (
                                     <input
                                         key={index}
@@ -214,9 +215,18 @@ const AddProductPage = () => {
                                         className="w-full px-4 py-2 border rounded text-black"
                                     />
                                 ))}
+                                {pairing.length < 3 && (
+                                    <button
+                                        type="button"
+                                        onClick={addPairing}
+                                        className="px-4 py-2 bg-gray-200 text-black rounded"
+                                    >
+                                        Add Pairing
+                                    </button>
+                                )}
                             </div>
                             <label className="block">Taste</label>
-                            <div className="flex space-x-4">
+                            <div className="space-y-2">
                                 {taste.map((t, index) => (
                                     <input
                                         key={index}
@@ -231,6 +241,15 @@ const AddProductPage = () => {
                                         className="w-full px-4 py-2 border rounded text-black"
                                     />
                                 ))}
+                                {taste.length < 3 && (
+                                    <button
+                                        type="button"
+                                        onClick={addTaste}
+                                        className="px-4 py-2 bg-gray-200 text-black rounded"
+                                    >
+                                        Add Taste
+                                    </button>
+                                )}
                             </div>
                             <label className="block">Location</label>
                             <div className="flex space-x-4">
@@ -327,7 +346,7 @@ const AddProductPage = () => {
                     )}
                     {activeTab === 'back' && (
                         <>
-                            <h2 className="text-xl font-bold mb-4">Backside of Card</h2>
+                            <h2 className="text-xl font-bold mb-4">Backside of Card - Supplier Information</h2>
 
                             <label className="block">Description</label>
                             <textarea
@@ -356,13 +375,19 @@ const AddProductPage = () => {
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
                     <div className="bg-white text-black p-6 rounded shadow-lg">
                         <h2 className="text-xl font-bold mb-4">Product Added Successfully!</h2>
-                        <p className="mb-4">Would you like to add another product or go to your dashboard?</p>
+                        <p className="mb-4">Would you like to add another product or go somewhere else?</p>
                         <div className="flex space-x-4">
                             <button
                                 className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                                 onClick={handleAddAnotherProduct}
                             >
                                 Add Another Product
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                                onClick={handleGoToProducts}
+                            >
+                                Go to Products
                             </button>
                             <button
                                 className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
