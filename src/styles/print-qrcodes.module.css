@@ -1,0 +1,25 @@
+.printable-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.printable-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px dashed #ccc;
+    padding: 8px;
+    position: relative;
+}
+
+.cut-line {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #ccc;
+    margin-top: 8px;
+}

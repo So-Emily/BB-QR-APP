@@ -136,6 +136,7 @@ const SendQRCodesPage = () => {
                         const qr = new QRCodeSVG({
                             content: qrCodeURL,
                             padding: 4,
+                            // Get a full aspect ratiom QR code
                             width: 256,
                             height: 256,
                             color: "#000000",

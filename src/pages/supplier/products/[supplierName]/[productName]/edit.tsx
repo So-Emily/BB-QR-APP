@@ -1,4 +1,3 @@
-// src/pages/supplier/products/[supplierName]/[productName]/edit.tsx
 import { GetServerSideProps } from 'next';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
@@ -14,7 +13,7 @@ interface EditProductPageProps {
 
 const EditProductPage = ({ product }: EditProductPageProps) => {
     const [activeTab, setActiveTab] = useState('front');
-    const [name, setName] = useState(product.name);
+    const [name] = useState(product.name);
     const [description, setDescription] = useState(product.description);
     const [pairing, setPairing] = useState(product.pairing);
     const [taste, setTaste] = useState(product.taste);
@@ -105,6 +104,18 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
         }
     };
 
+    const addPairing = () => {
+        if (pairing.length < 3) {
+            setPairing([...pairing, '']);
+        }
+    };
+
+    const addTaste = () => {
+        if (taste.length < 3) {
+            setTaste([...taste, '']);
+        }
+    };
+
     return (
         <div>
             <Navbar />
@@ -130,7 +141,7 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {activeTab === 'front' && (
                         <>
-                            <label className="block">Item Name*</label>
+                            {/* <label className="block">Item Name*</label>
                             <input
                                 type="text"
                                 placeholder="Item Name"
@@ -138,7 +149,7 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                                 onChange={(e) => setName(e.target.value)}
                                 required
                                 className="w-full px-4 py-2 border rounded text-black"
-                            />
+                            /> */}
                             <label className="block">Item Description*</label>
                             <textarea
                                 placeholder="Description"
@@ -148,7 +159,7 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                                 className="w-full px-4 py-2 border rounded text-black"
                             />
                             <label className="block">Pairing</label>
-                            <div className="flex space-x-4">
+                            <div className="space-y-2">
                                 {pairing.map((pair, index) => (
                                     <input
                                         key={index}
@@ -163,9 +174,18 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                                         className="w-full px-4 py-2 border rounded text-black"
                                     />
                                 ))}
+                                {pairing.length < 3 && (
+                                    <button
+                                        type="button"
+                                        onClick={addPairing}
+                                        className="px-4 py-2 bg-gray-200 text-black rounded"
+                                    >
+                                        Add Pairing
+                                    </button>
+                                )}
                             </div>
                             <label className="block">Taste</label>
-                            <div className="flex space-x-4">
+                            <div className="space-y-2">
                                 {taste.map((t, index) => (
                                     <input
                                         key={index}
@@ -180,6 +200,15 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                                         className="w-full px-4 py-2 border rounded text-black"
                                     />
                                 ))}
+                                {taste.length < 3 && (
+                                    <button
+                                        type="button"
+                                        onClick={addTaste}
+                                        className="px-4 py-2 bg-gray-200 text-black rounded"
+                                    >
+                                        Add Taste
+                                    </button>
+                                )}
                             </div>
                             <label className="block">Location</label>
                             <div className="flex space-x-4">
@@ -271,7 +300,8 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                     )}
                     {activeTab === 'back' && (
                         <>
-                            <label className="block">Backside Supplier Description</label>
+                            <h2 className="text-xl font-bold mb-4">Backside of Card - Supplier Information</h2>
+                            <label className="block">Description</label>
                             <textarea
                                 placeholder="Supplier Description"
                                 value={backsideDescription}
@@ -279,7 +309,7 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                                 className="w-full px-4 py-2 border rounded text-black"
                             />
 
-                            <label className="block">Backside Supplier Message</label>
+                            <label className="block">Message</label>
                             <textarea
                                 placeholder="Supplier Message"
                                 value={backsideMessage}

@@ -6,17 +6,12 @@ import { fetchProductDataFromS3 } from '@/lib/s3';
 import { Product } from '@/types';
 import { useEffect, useState } from 'react';
 import Card from '@/components/Card/Card';
-import styles from '@/components/Card/Card.module.css';
 
 interface ProductPageProps {
     product: Product & { id?: string }; // Add optional `id` field for MongoDB
     supplierName: string;
     backsideInfo: { description: string, message: string };
 }
-
-const capitalizeWords = (str: string) => {
-    return str.replace(/\b\w/g, char => char.toUpperCase());
-};
 
 const ProductPage = ({ product, supplierName, backsideInfo }: ProductPageProps) => {
     const router = useRouter();
@@ -54,64 +49,24 @@ const ProductPage = ({ product, supplierName, backsideInfo }: ProductPageProps) 
         return <div>Loading...</div>;
     }
 
-    const formattedSupplierName = capitalizeWords(supplierName);
-
-    const frontContent = (
-        <div className="p-4">
-            <h1 className="text-2xl font-bold">{product.name}</h1>
-            <p>{product.description}</p>
-            <div className={styles.infoRow}>
-                {product.pairing.length > 0 && (
-                    <div className={styles.infoColumn}>
-                        <strong>Pairing:</strong>
-                        <div>{product.pairing.join(', ')}</div>
-                    </div>
-                )}
-                {product.location && (
-                    <div className={styles.infoColumn}>
-                        <strong>Origin:</strong>
-                        <div>
-                            {product.location.city && `${product.location.city}, `}
-                            {product.location.state && `${product.location.state}, `}
-                            {product.location.country}
-                        </div>
-                    </div>
-                )}
-                {product.taste.length > 0 && (
-                    <div className={styles.infoColumn}>
-                        <strong>Taste:</strong>
-                        <div>{product.taste.join(', ')}</div>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-
-    const backContent = (
-        <div className="p-4">
-            <h2 className="text-xl font-bold">Welcome from</h2>
-            <h1 className="text-2xl font-bold">{supplierName}</h1>
-            
-            <label className="text-sm">Description:</label>
-            <p>{backsideInfo.description}</p>
-
-            <label className="text-sm">Message:</label>
-            <p>{backsideInfo.message} </p>
-        </div>
-    );
-
     return (
         <div>
             <Navbar />
             <div className="container mx-auto p-4 flex justify-center items-center min-h-screen">
                 {error && <p className="text-red-500 text-center">{error}</p>}
                 <Card
-                    frontContent={frontContent}
-                    backContent={backContent}
+                    // Pushing all the props to Card.tsx
+                    productName={product.name}
+                    productDescription={product.description || ''}
                     backgroundUrl={product.backgroundUrl}
                     imageUrl={product.imageUrl}
-                    supplierName={formattedSupplierName} // Pass formatted supplierName prop
-                    cardStyles={product.styles} // Pass card styles
+                    supplierName={supplierName}
+                    cardStyles={product.styles}
+                    location={product.location}
+                    pairing={product.pairing}
+                    taste={product.taste}
+                    backsideDescription={backsideInfo.description}
+                    backsideMessage={backsideInfo.message}
                 />
             </div>
         </div>
