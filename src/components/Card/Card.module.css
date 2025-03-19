@@ -1,7 +1,7 @@
 .card {
     perspective: 1000px;
     cursor: pointer;
-    width: 320px; 
+    width: 325px; 
     height: 500px; 
     margin-bottom: 60px;
     border-radius: 10px;
@@ -50,17 +50,18 @@
 .backgroundImageContainer {
     position: relative;
     width: 100%;
-    height: 58%; /* Adjust height of background image on card */
+    height: 53%; /* Adjust height of background image on card */
+    min-height: 53%; /* Ensure minimum height for background image */
     overflow: hidden;
     border-bottom: 4px solid var(--card-border-color); /* Use CSS variable for border color */
 }
 
 .productImageContainer {
     position: absolute;
-    top: 54%;
+    top: 52%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 59%; /* Set width relative to the background image container */
+    width: 63%; /* Set width relative to the background image container */
     height: auto; /* Maintain aspect ratio */
     max-height: 100%; /* Ensure the product image does not exceed the background image height */
 }
@@ -109,6 +110,7 @@
     justify-content: space-between;
     width: 100%;
     margin-top: 10px;
+    padding: 2px;
 }
 
 .infoColumn {
@@ -127,12 +129,12 @@
 .infoColumn strong::after {
     content: '';
     position: absolute;
-    bottom: -4px; /* Adjust the position of the underline */
+    bottom: -4px; 
     left: 50%; /* Center the underline */
     transform: translateX(-50%); /* Center the underline */
     width: 150%; /* Adjust the width of the underline */
     height: 2px; /* Adjust the height of the underline */
-    background-color: currentColor; /* Use the current text color */
+    background-color: var(--card-border-color); /* Use the current text color */
 }
 
 .additionalContent {

@@ -2,7 +2,7 @@ import { GetServerSideProps } from 'next';
 import { fetchProductDataFromS3 } from '@/lib/s3';
 import { useEffect, useState } from 'react';
 import { Product } from '@/types';
-import Navbar from '@/components/Navbar/Navbar';
+// import Navbar from '@/components/Navbar/Navbar';
 import Card from '@/components/Card/Card';
 
 interface StoreProductPageProps {
@@ -53,7 +53,7 @@ const StoreProductPage = ({ product, supplierName, storeName, backsideInfo }: St
 
     return (
         <div>
-            <Navbar />
+            {/* <Navbar /> */}
             <div className="container mx-auto p-4 flex justify-center items-center min-h-screen">
                 {error && <p className="text-red-500 text-center">{error}</p>}
                 <Card

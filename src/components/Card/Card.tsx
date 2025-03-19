@@ -115,7 +115,7 @@ const Card = ({ backgroundUrl, imageUrl, additionalContent, supplierName, cardSt
                         <div className="flex justify-center mt-4">
                             <FaRegCalendarAlt size={37} />
                         </div>
-                        <p className="mt-4">Rescan the QR codes or visit here again during holidays or public events for updated themes and messages!</p>
+                        <p className="mt-4">Rescan the QR codes or visit here again during holidays and public events for updated themes and messages!</p>
                     </div>
                 </div>
             </div>

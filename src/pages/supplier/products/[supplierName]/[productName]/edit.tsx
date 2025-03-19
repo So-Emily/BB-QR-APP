@@ -13,7 +13,7 @@ interface EditProductPageProps {
 
 const EditProductPage = ({ product }: EditProductPageProps) => {
     const [activeTab, setActiveTab] = useState('front');
-    const [name, setName] = useState(product.name);
+    const [name] = useState(product.name);
     const [description, setDescription] = useState(product.description);
     const [pairing, setPairing] = useState(product.pairing);
     const [taste, setTaste] = useState(product.taste);
@@ -141,7 +141,7 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {activeTab === 'front' && (
                         <>
-                            <label className="block">Item Name*</label>
+                            {/* <label className="block">Item Name*</label>
                             <input
                                 type="text"
                                 placeholder="Item Name"
@@ -149,7 +149,7 @@ const EditProductPage = ({ product }: EditProductPageProps) => {
                                 onChange={(e) => setName(e.target.value)}
                                 required
                                 className="w-full px-4 py-2 border rounded text-black"
-                            />
+                            /> */}
                             <label className="block">Item Description*</label>
                             <textarea
                                 placeholder="Description"
