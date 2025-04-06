@@ -1,27 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar/Navbar';
-import { listFilesInS3, fetchProductDataFromS3, getSignedUrlForS3 } from '@/lib/s3';
+import { listFilesInS3, fetchProductDataFromS3 } from '@/lib/s3';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Button, TextField, Checkbox, FormControlLabel } from '@mui/material';
-import PrintIcon from '@mui/icons-material/Print';
 import styles from '@/styles/print-qrcodes.module.css';
 
+// Define the QRCode interface
 interface QRCode {
     key: string;
     signedUrl: string;
     productName: string;
     supplierName: string;
     storeName: string;
-    storeNumber: string;
 }
 
 const PrintQRCodesPage = () => {
     const { data: session } = useSession();
     const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
     const [selectedQRCodes, setSelectedQRCodes] = useState<string[]>([]);
-    const [qrCodeSize, setQRCodeSize] = useState<number>(128);
     const [error, setError] = useState('');
+    const [qrCodeSize, setQRCodeSize] = useState(128); // Default size
+    const [customSize, setCustomSize] = useState<string>(''); // Custom size input
 
     useEffect(() => {
         if (!session || !session.user) {
@@ -31,8 +30,11 @@ const PrintQRCodesPage = () => {
 
         const fetchQRCodes = async () => {
             try {
-                const userData = await fetch('/api/user').then(res => res.json());
-                console.log('User Data:', userData);
+                const userResponse = await fetch(`/api/user`);
+                if (!userResponse.ok) {
+                    throw new Error('Failed to fetch user details');
+                }
+                const userData = await userResponse.json();
 
                 const storeDetails = userData.storeDetails;
                 if (!storeDetails || storeDetails.length === 0) {
@@ -40,44 +42,52 @@ const PrintQRCodesPage = () => {
                     return;
                 }
 
-                const supplierName = storeDetails.supplierName?.replace(/\s+/g, '-').toLowerCase() ?? '';
-                const storeName = storeDetails.storeName.replace(/\s+/g, '-').toLowerCase();
-                const storeNumber = storeDetails.storeNumber;
-                const storeIdentifier = `${storeName}-${storeNumber}`;
+                const storeName = `${storeDetails.storeName.replace(/\s+/g, '-').toLowerCase()}-${storeDetails.storeNumber}`;
+                const supplierKeys = await listFilesInS3('suppliers/');
+                const supplierNames = supplierKeys
+                    .filter((key): key is string => key !== undefined && key.includes('/stores/'))
+                    .map(key => {
+                        const parts = key.split('/');
+                        return parts.length > 1 ? parts[1] : '';
+                    });
 
-                const productKeys = await listFilesInS3(`suppliers/${supplierName}/stores/${storeIdentifier}/`);
-                console.log('Product Keys:', productKeys);
+                const qrCodePromises = supplierNames.flatMap(supplierName => {
+                    if (!supplierName) return [];
+                    return listFilesInS3(`suppliers/${supplierName}/stores/${storeName}/`).then(qrCodeKeys => {
+                        return qrCodeKeys
+                            .filter((key): key is string => key !== undefined && key.endsWith('info.json'))
+                            .map(async (key: string) => {
+                                try {
+                                    const productInfo = await fetchProductDataFromS3(key);
+                                    const qrCodeKey = key.replace('info.json', `${productInfo.productName.replace(/\s+/g, '-').toLowerCase()}.svg`);
 
-                const jsonKeys = productKeys.filter((key): key is string => key !== undefined && key.endsWith('info.json'));
-                console.log('JSON Keys:', jsonKeys);
+                                    // Generate the correct URL for the QR code
+                                    const qrCodeUrl = `${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${productInfo.supplierName}/${productInfo.storeName}-${productInfo.storeNumber}/${productInfo.productName}`;
 
-                const productPromises = jsonKeys.map(async (key: string) => {
-                    try {
-                        const productData = await fetchProductDataFromS3(key);
-                        console.log('Product Data:', productData);
-
-                        const qrCodeKey = key.replace('info.json', `${productData.productName.replace(/\s+/g, '-').toLowerCase()}.svg`);
-                        const signedUrl = await getSignedUrlForS3(qrCodeKey);
-                        console.log('Signed URL:', signedUrl);
-
-                        return {
-                            key: qrCodeKey,
-                            signedUrl,
-                            productName: productData.productName,
-                            supplierName,
-                            storeName: storeDetails.storeName,
-                            storeNumber: storeDetails.storeNumber,
-                        };
-                    } catch (err) {
-                        console.error(`Failed to fetch product data for key ${key}:`, err);
-                        return null;
-                    }
+                                    return {
+                                        key: qrCodeKey,
+                                        signedUrl: qrCodeUrl, // Use qrCodeUrl directly as signedUrl
+                                        productName: productInfo.productName,
+                                        supplierName: productInfo.supplierName,
+                                        storeName: `${productInfo.storeName}-${productInfo.storeNumber}`,
+                                    };
+                                } catch (err) {
+                                    console.error(`Failed to fetch QR code data for key ${key}:`, err);
+                                    return null;
+                                }
+                            });
+                    });
                 });
 
-                const qrCodes = (await Promise.all(productPromises)).filter(qrCode => qrCode !== null) as QRCode[];
-                console.log('QR Codes:', qrCodes);
-                setQRCodes(qrCodes);
+                const qrCodes = (await Promise.all((await Promise.all(qrCodePromises)).flat()))
+                    .filter((qrCode): qrCode is QRCode => qrCode !== null);
+
+                // Remove duplicates based on the `key` property
+                const uniqueQRCodes = Array.from(new Map(qrCodes.map(qrCode => [qrCode.key, qrCode])).values());
+
+                setQRCodes(uniqueQRCodes);
             } catch (err) {
+                console.error('Failed to fetch QR codes:', err);
                 setError('Failed to fetch QR codes: ' + err);
             }
         };
@@ -85,96 +95,132 @@ const PrintQRCodesPage = () => {
         fetchQRCodes();
     }, [session]);
 
-    const handleQRCodeSelection = (key: string) => {
-        setSelectedQRCodes(prevSelected =>
-            prevSelected.includes(key)
-                ? prevSelected.filter(selectedKey => selectedKey !== key)
-                : [...prevSelected, key]
+    const handlePrint = () => {
+        if (selectedQRCodes.length === 0) {
+            alert('Please select at least one QR code to print.');
+            return;
+        }
+        // Print logic (e.g., render only selected QR codes for printing)
+        window.print();
+    };
+
+    const handleSelectAll = () => {
+        if (selectedQRCodes.length === qrCodes.length) {
+            setSelectedQRCodes([]); // Deselect all
+        } else {
+            setSelectedQRCodes(qrCodes.map(qrCode => qrCode.key)); // Select all
+        }
+    };
+
+    const handleCheckboxChange = (key: string) => {
+        setSelectedQRCodes(prev =>
+            prev.includes(key) ? prev.filter(selectedKey => selectedKey !== key) : [...prev, key]
         );
     };
 
-    const handlePrint = () => {
-        window.print();
+    const handleCustomSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        if (!isNaN(Number(value)) && Number(value) > 0) {
+            setQRCodeSize(Number(value));
+        }
+        setCustomSize(value);
     };
 
     return (
         <div>
-            <Navbar />
+            {session && session.user && <Navbar />}
             <div className="container mx-auto p-4">
                 <h1 className="text-2xl font-bold mb-4">Print QR Codes</h1>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
+
+                {/* Dropdown and custom input for QR code size */}
                 <div className="mb-4">
-                    <TextField
-                        label="QR Code Size"
-                        type="number"
+                    <label htmlFor="qrCodeSize" className="block text-sm font-medium text-gray-100">
+                        Select QR Code Size:
+                    </label>
+                    <select
+                        id="qrCodeSize"
                         value={qrCodeSize}
-                        onChange={(e) => setQRCodeSize(parseInt(e.target.value))}
-                        inputProps={{ min: 64, max: 512 }}
-                        className="mr-4"
+                        onChange={(e) => {
+                            setQRCodeSize(Number(e.target.value));
+                            setCustomSize(''); // Clear custom size when selecting from dropdown
+                        }}
+                        className="mt-1 block w-25 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-800"
+                    >
+                        <option value={96}>Small (96px)</option>
+                        <option value={128}>Medium (128px)</option>
+                        <option value={192}>Large (192px)</option>
+                    </select>
+                    <label htmlFor="customSize" className="block text-sm font-medium text-gray-100 mt-4">
+                        Or Enter Custom Size (px):
+                    </label>
+                    <input
+                        id="customSize"
+                        type="text"
+                        value={customSize}
+                        onChange={handleCustomSizeChange}
+                        placeholder="Enter a custom size"
+                        className="mt-1 block w-25 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-800"
                     />
                 </div>
+
+                {/* Product Selection Section */}
                 <div className="mb-4">
-                    <FormControlLabel
-                        control={
-                            <Checkbox
-                                checked={selectedQRCodes.length === qrCodes.length}
-                                onChange={() => setSelectedQRCodes(selectedQRCodes.length === qrCodes.length ? [] : qrCodes.map(qrCode => qrCode.key))}
-                            />
-                        }
-                        label="Select All"
-                    />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {qrCodes.map((qrCode, index) => (
-                        <div key={index} className="border rounded shadow p-4 flex flex-col items-center mb-4">
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={selectedQRCodes.includes(qrCode.key)}
-                                        onChange={() => handleQRCodeSelection(qrCode.key)}
-                                    />
-                                }
-                                label={qrCode.productName}
-                            />
-                            <QRCodeCanvas
-                                value={qrCode.signedUrl}
-                                size={qrCodeSize}
-                                level="H"
-                                includeMargin={true}
-                            />
-                        </div>
-                    ))}
-                </div>
-                <div className="mt-4">
-                    <h2 className="text-xl font-bold mb-2">Selected QR Codes</h2>
-                    <div className={styles.printableGrid}>
-                        {selectedQRCodes.map((key, index) => {
-                            const qrCode = qrCodes.find(qr => qr.key === key);
-                            if (!qrCode) return null;
-                            return (
-                                <div key={index} className={styles.printableItem}>
-                                    <p className="text-xs text-center">{qrCode.productName}</p>
-                                    <QRCodeCanvas
-                                        value={qrCode.signedUrl}
-                                        size={qrCodeSize}
-                                        level="H"
-                                        includeMargin={true}
-                                    />
-                                    <div className={styles.cutLine}></div>
-                                </div>
-                            );
-                        })}
+                    <h2 className="text-lg font-bold mb-2">Select Products to Print</h2>
+                    <button
+                        onClick={handleSelectAll}
+                        className="mb-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                    >
+                        {selectedQRCodes.length === qrCodes.length ? 'Deselect All' : 'Select All'}
+                    </button>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {qrCodes.map((qrCode, index) => (
+                            <div key={index} className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={selectedQRCodes.includes(qrCode.key)}
+                                    onChange={() => handleCheckboxChange(qrCode.key)}
+                                    className="mr-2"
+                                />
+                                <label>{qrCode.productName}</label>
+                            </div>
+                        ))}
                     </div>
                 </div>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<PrintIcon />}
+
+                {/* QR Code Display Section */}
+                <div className={styles.printContainer}>
+                    {/* Other page content */}
+                    <div className={styles.printWrapper}>
+                        <div
+                            className={styles.printableGrid}
+                            style={{
+                                gridTemplateColumns: `repeat(auto-fit, minmax(${qrCodeSize + 32}px, 1fr))`, // Adjust grid based on size
+                            }}
+                        >
+                            {qrCodes
+                                .filter(qrCode => selectedQRCodes.includes(qrCode.key))
+                                .map((qrCode, index) => (
+                                    <div key={index} className={styles.printableItem}>
+                                        <p className="text-xs text-center">{qrCode.productName}</p>
+                                        <QRCodeCanvas
+                                            value={qrCode.signedUrl}
+                                            size={qrCodeSize} // Use the selected size
+                                            level="H"
+                                            includeMargin={true}
+                                        />
+                                        <div className={styles.cutLine}></div>
+                                    </div>
+                                ))}
+                        </div>
+                    </div>
+                </div>
+                <button
                     onClick={handlePrint}
-                    className="mt-4"
+                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                 >
-                    Print Selected QR Codes
-                </Button>
+                    Print QR Codes
+                </button>
             </div>
         </div>
     );

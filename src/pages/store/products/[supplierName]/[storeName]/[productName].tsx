@@ -1,122 +1,118 @@
-import { GetServerSideProps } from 'next';
-import { fetchProductDataFromS3 } from '@/lib/s3';
-import { useEffect, useState } from 'react';
-import { Product } from '@/types';
-// import Navbar from '@/components/Navbar/Navbar';
-import Card from '@/components/Card/Card';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import Navbar from '@/components/Navbar/Navbar';
+import { listFilesInS3, fetchProductDataFromS3, getSignedUrlForS3 } from '@/lib/s3';
+import { QRCodeCanvas } from 'qrcode.react';
+import styles from '@/styles/print-qrcodes.module.css';
 
-interface StoreProductPageProps {
-    product: Product;
+interface QRCode {
+    key: string;
+    signedUrl: string;
+    productName: string;
     supplierName: string;
     storeName: string;
-    backsideInfo: { description: string; message: string };
 }
 
-const StoreProductPage = ({ product, supplierName, storeName, backsideInfo }: StoreProductPageProps) => {
-    console.log(`Supplier Name: ${supplierName}`);
-    console.log(`Store Name: ${storeName}`);
-    console.log(`Product Name: ${product.name}`);
-
+const PrintQRCodesPage = () => {
+    const { data: session } = useSession();
+    const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
     const [error, setError] = useState('');
 
-    // Track scan count when the page loads
     useEffect(() => {
-        const trackScan = async () => {
-            if (!product._id) {
-                console.error('Product ID is missing. Cannot track scan count.');
-                return;
-            }
+        if (!session || !session.user) {
+            setError('User not authenticated');
+            return;
+        }
 
+        const fetchQRCodes = async () => {
             try {
-                const response = await fetch(`/api/scans/${product._id}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                });
+                const userResponse = await fetch(`/api/user`);
+                if (!userResponse.ok) {
+                    throw new Error('Failed to fetch user details');
+                }
+                const userData = await userResponse.json();
 
-                if (!response.ok) {
-                    throw new Error('Failed to track scan count.');
+                const storeDetails = userData.storeDetails;
+                if (!storeDetails || storeDetails.length === 0) {
+                    setError('Store details not found');
+                    return;
                 }
 
-                console.log(`Scan tracked for product: ${product._id}`);
+                const storeName = `${storeDetails.storeName.replace(/\s+/g, '-').toLowerCase()}-${storeDetails.storeNumber}`;
+                const supplierKeys = await listFilesInS3('suppliers/');
+                const supplierNames = supplierKeys
+                    .filter((key): key is string => key !== undefined && key.includes('/stores/'))
+                    .map(key => key.split('/')[1]);
+
+                const qrCodePromises = supplierNames.flatMap(supplierName =>
+                    listFilesInS3(`suppliers/${supplierName}/stores/${storeName}/`).then(qrCodeKeys =>
+                        qrCodeKeys
+                            .filter((key): key is string => key !== undefined && key.endsWith('info.json'))
+                            .map(async key => {
+                                try {
+                                    const productInfo = await fetchProductDataFromS3(key);
+                                    const qrCodeKey = key.replace('info.json', `${productInfo.productName.replace(/\s+/g, '-').toLowerCase()}.svg`);
+                                    const signedUrl = await getSignedUrlForS3(qrCodeKey);
+                                    return {
+                                        key: qrCodeKey,
+                                        signedUrl,
+                                        productName: productInfo.productName,
+                                        supplierName: productInfo.supplierName,
+                                        storeName: `${productInfo.storeName}-${productInfo.storeNumber}`,
+                                    };
+                                } catch (err) {
+                                    console.error(`Failed to fetch QR code data for key ${key}:`, err);
+                                    return null;
+                                }
+                            })
+                    )
+                );
+
+                const qrCodes = (await Promise.all((await Promise.all(qrCodePromises)).flat())).filter(
+                    (qrCode): qrCode is QRCode => qrCode !== null
+                );
+
+                setQRCodes(qrCodes);
             } catch (err) {
-                console.error('Error tracking scan count:', err);
-                setError('Failed to track scan count.');
+                setError('Failed to fetch QR codes: ' + err);
             }
         };
 
-        trackScan();
-    }, [product._id]);
+        fetchQRCodes();
+    }, [session]);
 
-    if (!product) {
-        return <div>Product not found</div>;
-    }
+    const handlePrint = () => {
+        window.print();
+    };
 
     return (
         <div>
-            {/* <Navbar /> */}
-            <div className="container mx-auto p-4 flex justify-center items-center min-h-screen">
-                {error && <p className="text-red-500 text-center">{error}</p>}
-                <Card
-                    // Pushing all the props to Card.tsx
-                    productName={product.name}
-                    productDescription={product.description || ''}
-                    backgroundUrl={product.backgroundUrl}
-                    imageUrl={product.imageUrl}
-                    supplierName={supplierName}
-                    cardStyles={product.styles}
-                    location={product.location}
-                    pairing={product.pairing}
-                    taste={product.taste}
-                    backsideDescription={backsideInfo.description}
-                    backsideMessage={backsideInfo.message}
-                />
+            {session && session.user && <Navbar />}
+            <div className="container mx-auto p-4">
+                <h1 className="text-2xl font-bold mb-4">Print QR Codes</h1>
+                {error && <p className="text-red-500 mb-4">{error}</p>}
+                <div className={styles.printableGrid}>
+                    {qrCodes.map((qrCode, index) => (
+                        <div key={index} className={styles.printableItem}>
+                            <p className="text-sm font-semibold text-center mb-2">{qrCode.productName}</p>
+                            <QRCodeCanvas
+                                value={qrCode.signedUrl}
+                                size={128}
+                                level="H"
+                                includeMargin={true}
+                            />
+                        </div>
+                    ))}
+                </div>
+                <button
+                    onClick={handlePrint}
+                    className={`${styles.floatingButton} px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600`}
+                >
+                    Print QR Codes
+                </button>
             </div>
         </div>
     );
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-    const { supplierName, storeName, productName } = context.params as { supplierName: string; storeName: string; productName: string };
-
-    try {
-        // Increment the scan count
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/increment-scan`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ supplierName, productName }),
-        });
-
-        console.log(`Supplier Name: ${supplierName}`);
-        console.log(`Store Name: ${storeName}`);
-        console.log(`Product Name: ${productName}`);
-
-        // Fetch product data from S3
-        const productData = await fetchProductDataFromS3(`suppliers/${supplierName}/products/${productName}/product.json`);
-        const backsideInfoKey = `suppliers/${supplierName}/backsideInfo.json`;
-        let backsideInfo = { description: '', message: '' };
-
-        try {
-            backsideInfo = await fetchProductDataFromS3(backsideInfoKey);
-        } catch (err) {
-            console.error('Failed to fetch backside info:', err);
-        }
-
-        return {
-            props: {
-                product: productData,
-                storeName,
-                supplierName,
-                backsideInfo,
-            },
-        };
-    } catch (err) {
-        console.error('Failed to fetch product data:', err);
-        return {
-            props: {
-                product: null,
-            },
-        };
-    }
-};
-
-export default StoreProductPage;
+export default PrintQRCodesPage;
