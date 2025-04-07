@@ -1,19 +1,29 @@
 .navbar {
     background-color: gray;
-    padding: 8px 16px; /* Adjust padding for better vertical alignment */
+    padding: 8px 16px;
     display: flex;
-    align-items: center; /* Vertically center items */
-    justify-content: space-between; /* Space out items horizontally */
+    align-items: center;
+    justify-content: space-between;
 }
 
 .navList {
     display: flex;
     gap: 16px;
     list-style-type: none;
-    margin: 0; /* Remove default margin */
-    padding: 0; /* Remove default padding */
-    align-items: center; /* Vertically center list items */
-    flex-grow: 1; /* Allow the list to grow and push the right-aligned items */
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.logo {
+    margin-right: -8px; /* Add spacing between the logo and the Home link */
+}
+
+.logoImage {
+    height: 40px; /* Adjust the height of the logo */
+    width: auto; /* Maintain aspect ratio */
+    cursor: pointer;
 }
 
 .navItem {
@@ -24,8 +34,8 @@
     text-align: center;
     text-decoration: none;
     display: flex;
-    align-items: center; /* Vertically center text inside buttons */
-    justify-content: center; /* Horizontally center text inside buttons */
+    align-items: center;
+    justify-content: center;
 }
 
 .navItem:hover {
@@ -33,31 +43,31 @@
 }
 
 .greenButton {
-    background-color: #28a745; /* Green color */
+    background-color: #28a745;
     color: white;
     border: none;
     transition: background-color 0.3s ease;
 }
 
 .greenButton:hover {
-    background-color: #218838; /* Darker green on hover */
+    background-color: #218838;
 }
 
 .grayButton {
-    background-color: #3d3d3d; /* Dark gray color */
+    background-color: #3d3d3d;
     color: white;
     border: none;
-    padding: 8px 16px; /* Add padding to make it look like a button */
-    border-radius: 5px; /* Add rounded corners */
+    padding: 8px 16px;
+    border-radius: 5px;
     transition: background-color 0.3s ease;
 }
 
 .grayButton:hover {
-    background-color: #242424; /* Darker gray on hover */
+    background-color: #242424;
 }
 
 .rightAligned {
-    margin-left: auto; /* Push the right-aligned items to the far right */
+    margin-left: auto;
     display: flex;
-    align-items: center; /* Vertically center items in the right-aligned section */
+    align-items: center;
 }

@@ -8,6 +8,12 @@ const Navbar = () => {
     return (
         <nav className={styles.navbar}>
             <ul className={styles.navList}>
+                {/* Logo */}
+                <li className={styles.logo}>
+                    <Link href="/" passHref>
+                        <img src="/logo.png" alt="Booze Buddy Logo" className={styles.logoImage} />
+                    </Link>
+                </li>
                 <li>
                     <Link href={session ? (session.user.role === 'supplier' ? '/supplier/dashboard' : '/store/dashboard') : '/'} passHref>
                         <span role="link" className={styles.navItem}>Home</span>
