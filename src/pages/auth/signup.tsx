@@ -75,21 +75,21 @@ const SignUpPage = () => {
                         <h2 className="text-xl font-bold mb-2 text-white">Are you a</h2>
                         <button
                             onClick={() => setRole('supplier')}
-                            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            className="w-2/3 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                         >
                             Supplier
                         </button>
                         <p className="text-white">or</p>
                         <button
                             onClick={() => setRole('store-manager')}
-                            className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                            className="w-2/3 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                         >
                             Store Manager
                         </button>
                         <p className="text-white">otherwise</p>
                         <button
                             onClick={() => router.push('/auth/signin')}
-                            className="w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                            className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
                         >
                             Back to Login
                         </button>

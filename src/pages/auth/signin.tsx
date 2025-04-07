@@ -1,11 +1,9 @@
-// src/pages/auth/signin.tsx
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Navbar from '@/components/Navbar/Navbar';
 import { signIn } from 'next-auth/react';
 
 const SignInPage = () => {
-    const [role, setRole] = useState<string | null>(null);
     const [error, setError] = useState('');
     const router = useRouter();
 
@@ -23,13 +21,7 @@ const SignInPage = () => {
         if (result?.error) {
             setError(result.error);
         } else {
-            if (role === 'supplier') {
-                router.push('/supplier/dashboard');
-            } else if (role === 'store-manager') {
-                router.push('/store/dashboard');
-            } else {
-                setError('Invalid role');
-            }
+            router.push('/dashboard'); // Redirect to a generic dashboard or adjust as needed
         }
     };
 
@@ -37,69 +29,41 @@ const SignInPage = () => {
         <div>
             <Navbar />
             <main className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-                <h1 className="text-4xl font-bold mb-4 text-white">Sign Into Booze Buddy</h1>
-                <h2 className="text-xl font-bold mb-4 text-white">Are you a</h2>
-                {error && <p className="text-red-500 mb-4">{error}</p>}
-                {!role && (
-                    <div className="flex flex-col items-center space-y-4 w-full max-w-md">
+                <h1 className="text-4xl font-bold mb-6 text-white">Sign Into Your Booze Buddy</h1>
+                                {error && <p className="text-red-500 mb-4">{error}</p>}
+                <form onSubmit={handleSignIn} className="space-y-4 w-full max-w-md">
+                    <input
+                        type="text"
+                        name="identifier"
+                        placeholder="Username or Email"
+                        required
+                        className="w-full px-4 py-2 border rounded text-black text-center"
+                    />
+                    <input
+                        type="password"
+                        name="password"
+                        placeholder="Password"
+                        required
+                        className="w-full px-4 py-2 border rounded text-black text-center"
+                    />
+                    <div className="flex justify-center">
                         <button
-                            onClick={() => setRole('supplier')}
-                            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            type="submit"
+                            className="w-2/3 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
                         >
-                            Supplier
+                            Login
                         </button>
-                        <p className="text-white">or</p>
+                    </div>
+                    <div className="flex justify-center">
                         <button
-                            onClick={() => setRole('store-manager')}
-                            className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                        >
-                            Store Manager
-                        </button>
-                        <p className="text-white">otherwise</p>
-                        <button
+                            type="button"
                             onClick={() => router.push('/auth/signup')}
-                            className="w-full px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                            className="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
                         >
                             Create an Account
                         </button>
                     </div>
-                )}
-                {role && (
-                    <form onSubmit={handleSignIn} className="space-y-4 w-full max-w-md">
-                        <h2 className="text-2xl font-semibold text-white text-center">
-                            {role === 'supplier' ? 'Supplier' : 'Store Manager'}
-                        </h2>
-                        <input
-                            type="text"
-                            name="identifier"
-                            placeholder="Username or Email"
-                            required
-                            className="w-full px-4 py-2 border rounded text-black text-center"
-                        />
-                        <input
-                            type="password"
-                            name="password"
-                            placeholder="Password"
-                            required
-                            className="w-full px-4 py-2 border rounded text-black text-center"
-                        />
-                        <button
-                            type="submit"
-                            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                        >
-                            Login
-                        </button>
-                        <div className='flex justify-center'>
-                            <button
-                                type="button"
-                                onClick={() => setRole(null)}
-                                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                            >
-                                Back
-                            </button>
-                        </div>
-                    </form>
-                )}
+                </form>
             </main>
         </div>
     );
