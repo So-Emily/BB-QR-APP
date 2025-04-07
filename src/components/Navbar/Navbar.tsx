@@ -14,11 +14,13 @@ const Navbar = () => {
                         <img src="/logo.png" alt="Booze Buddy Logo" className={styles.logoImage} />
                     </Link>
                 </li>
-                <li>
-                    <Link href={session ? (session.user.role === 'supplier' ? '/supplier/dashboard' : '/store/dashboard') : '/'} passHref>
-                        <span role="link" className={styles.navItem}>Home</span>
-                    </Link>
-                </li>
+                {status === 'authenticated' && (
+                    <li>
+                        <Link href={session.user.role === 'supplier' ? '/supplier/dashboard' : '/store/dashboard'} passHref>
+                            <span role="link" className={styles.navItem}>Home</span>
+                        </Link>
+                    </li>
+                )}
                 {status === 'authenticated' && session.user.role === 'supplier' && (
                     <>
                         <li>

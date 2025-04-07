@@ -25,16 +25,16 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 text-black">
+    <div className="min-h-screen bg-dark-400 text-black">
       {/* Header */}
       <Navbar />
 
       {/* Main Content */}
       <main className="p-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
         {/* Left Panel */}
-        <section className="bg-white shadow-md rounded-lg p-6 w-full md:w-1/3">
+        <section className="bg-gray-100 shadow-md rounded-lg p-6 w-full md:w-1/3">
           <div className="flex flex-col items-center">
-            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+            <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center mb-4">
               <span className="text-red-500 text-3xl font-bold">A</span>
             </div>
             <h2 className="text-lg font-bold mb-4">
@@ -44,20 +44,20 @@ const Dashboard = () => {
           <div className="grid grid-cols-2 gap-4">
             {/* Placeholder items */}
             <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
+              <div className="w-16 h-16 bg-gray-300 rounded mb-2"></div>
               <span className="text-sm">Top Item</span>
             </div>
             <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
+              <div className="w-16 h-16 bg-gray-300 rounded mb-2"></div>
               <span className="text-sm">Top Store</span>
             </div>
           </div>
         </section>
 
         {/* Right Panel */}
-        <section className="bg-white shadow-md rounded-lg p-6 flex-1">
+        <section className="bg-gray-100 shadow-md rounded-lg p-6 flex-1">
           <h1 className="text-lg font-bold mb-4">Product Scan Count Test</h1>
-          <div className="h-64 bg-gray-200 flex items-center justify-center rounded">
+          <div className="h-64 bg-gray-300 flex items-center justify-center rounded">
             <ChartComponent userId={userId} />
           </div>
         </section>

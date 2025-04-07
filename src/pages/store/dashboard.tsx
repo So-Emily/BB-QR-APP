@@ -25,7 +25,7 @@ const StoreDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 text-black">
+    <div className="min-h-screen bg-dark-400 text-black">
       {/* Header */}
       <Navbar />
 
