@@ -1,4 +1,3 @@
-// src/components/Navbar/Navbar.tsx
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
 import styles from './Navbar.module.css';
@@ -26,14 +25,9 @@ const Navbar = () => {
                                 <span role="link" className={styles.navItem}>Send QR Codes</span>
                             </Link>
                         </li>
-                        {/* <li>
-                            <Link href="/supplier/qrcodes" passHref>
-                                <span role="link" className={styles.navItem}>QR Codes</span>
-                            </Link>
-                        </li> */}
                         <li>
                             <Link href="/supplier/add-product" passHref>
-                                <span role="link" className={styles.navItem}>Add Product</span>
+                                <button className={`${styles.navItem} ${styles.greenButton}`}>Add Product</button>
                             </Link>
                         </li>
                     </>
@@ -54,11 +48,16 @@ const Navbar = () => {
                 )}
                 <li className={styles.rightAligned}>
                     {status === 'authenticated' ? (
-                        <button onClick={() => signOut({ callbackUrl: '/' })} className={styles.navItem}>Logout</button>
+                        <button onClick={() => signOut({ callbackUrl: '/' })} className={`${styles.navItem} ${styles.grayButton}`}>
+                            Logout
+                        </button>
                     ) : (
-                        <Link href="/auth/signin" passHref>
-                            <span role="link" className={styles.navItem}>Login</span>
-                        </Link>
+                        <button
+                            onClick={() => window.location.href = '/auth/signin'}
+                            className={`${styles.navItem} ${styles.grayButton}`}
+                        >
+                            Login
+                        </button>
                     )}
                 </li>
             </ul>

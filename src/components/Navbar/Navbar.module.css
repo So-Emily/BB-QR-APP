@@ -1,27 +1,63 @@
 .navbar {
     background-color: gray;
-    padding: 16px;
+    padding: 8px 16px; /* Adjust padding for better vertical alignment */
+    display: flex;
+    align-items: center; /* Vertically center items */
+    justify-content: space-between; /* Space out items horizontally */
 }
 
 .navList {
     display: flex;
     gap: 16px;
     list-style-type: none;
-    justify-content: space-between;
-    width: 100%;
+    margin: 0; /* Remove default margin */
+    padding: 0; /* Remove default padding */
+    align-items: center; /* Vertically center list items */
+    flex-grow: 1; /* Allow the list to grow and push the right-aligned items */
 }
 
 .navItem {
     color: white;
     cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 5px;
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    align-items: center; /* Vertically center text inside buttons */
+    justify-content: center; /* Horizontally center text inside buttons */
 }
 
 .navItem:hover {
     color: lightgray;
 }
 
+.greenButton {
+    background-color: #28a745; /* Green color */
+    color: white;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.greenButton:hover {
+    background-color: #218838; /* Darker green on hover */
+}
+
+.grayButton {
+    background-color: #3d3d3d; /* Dark gray color */
+    color: white;
+    border: none;
+    padding: 8px 16px; /* Add padding to make it look like a button */
+    border-radius: 5px; /* Add rounded corners */
+    transition: background-color 0.3s ease;
+}
+
+.grayButton:hover {
+    background-color: #242424; /* Darker gray on hover */
+}
+
 .rightAligned {
-    margin-left: auto;
+    margin-left: auto; /* Push the right-aligned items to the far right */
     display: flex;
-    gap: 16px;
+    align-items: center; /* Vertically center items in the right-aligned section */
 }

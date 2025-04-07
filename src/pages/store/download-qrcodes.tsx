@@ -19,16 +19,26 @@ const DownloadQRCodesPage = () => {
     const { data: session } = useSession();
     const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (!session || !session.user) {
             setError('User not authenticated');
             console.error('User not authenticated');
+            setLoading(false);
             return;
         }
 
         const fetchQRCodes = async () => {
             try {
+                // Check if QR codes are cached in localStorage
+                const cachedQRCodes = localStorage.getItem('qrCodes');
+                if (cachedQRCodes) {
+                    setQRCodes(JSON.parse(cachedQRCodes));
+                    setLoading(false);
+                    return;
+                }
+
                 const userResponse = await fetch(`/api/user`);
                 if (!userResponse.ok) {
                     throw new Error('Failed to fetch user details');
@@ -36,38 +46,27 @@ const DownloadQRCodesPage = () => {
                 const userData = await userResponse.json();
 
                 const storeDetails = userData.storeDetails;
-                console.log('Store Details:', storeDetails);
                 if (!storeDetails || storeDetails.length === 0) {
                     setError('Store details not found');
                     console.error('Store details not found');
+                    setLoading(false);
                     return;
                 }
 
                 const storeName = `${storeDetails.storeName.replace(/\s+/g, '-').toLowerCase()}-${storeDetails.storeNumber}`;
-                console.log('Store Name:', storeName);
-
                 const supplierKeys = await listFilesInS3('suppliers/');
-                console.log('Supplier Keys:', supplierKeys);
-
                 const supplierNames = supplierKeys
                     .filter((key): key is string => key !== undefined && key.includes('/stores/'))
-                    .map(key => {
-                        const parts = key.split('/');
-                        return parts.length > 1 ? parts[1] : '';
-                    });
-
-                console.log('Supplier Names:', supplierNames);
+                    .map(key => key.split('/')[1]);
 
                 const qrCodePromises = supplierNames.flatMap(supplierName => {
                     if (!supplierName) return [];
                     return listFilesInS3(`suppliers/${supplierName}/stores/${storeName}/`).then(qrCodeKeys => {
-                        console.log(`QR Code Keys for supplier ${supplierName}:`, qrCodeKeys);
                         return qrCodeKeys
                             .filter((key): key is string => key !== undefined && key.endsWith('info.json'))
                             .map(async (key: string) => {
                                 try {
                                     const productInfo = await fetchProductDataFromS3(key);
-                                    console.log('Product Info:', productInfo);
                                     const qrCodeKey = key.replace('info.json', `${productInfo.productName.replace(/\s+/g, '-').toLowerCase()}.svg`);
                                     const signedUrl = await getSignedUrlForS3(qrCodeKey);
                                     return {
@@ -87,15 +86,17 @@ const DownloadQRCodesPage = () => {
 
                 const qrCodes = (await Promise.all((await Promise.all(qrCodePromises)).flat())).filter((qrCode): qrCode is QRCode => qrCode !== null);
 
-                // Filter out duplicate QR codes
-                const uniqueQRCodes = Array.from(new Set(qrCodes.map(qrCode => qrCode.key)))
-                    .map(key => qrCodes.find(qrCode => qrCode.key === key));
+                // Remove duplicates and save to state
+                const uniqueQRCodes = Array.from(new Map(qrCodes.map(qrCode => [qrCode.key, qrCode])).values());
+                setQRCodes(uniqueQRCodes);
 
-                console.log('Unique QR Codes:', uniqueQRCodes);
-                setQRCodes(uniqueQRCodes as QRCode[]);
+                // Cache QR codes in localStorage
+                localStorage.setItem('qrCodes', JSON.stringify(uniqueQRCodes));
             } catch (err) {
                 console.error('Failed to fetch QR codes:', err);
                 setError('Failed to fetch QR codes: ' + err);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -136,6 +137,10 @@ const DownloadQRCodesPage = () => {
             setError('Failed to download QR code: ' + err);
         }
     };
+
+    if (loading) {
+        return <div>Loading QR codes...</div>;
+    }
 
     return (
         <div>

@@ -96,7 +96,7 @@ const ViewProductsPage = () => {
         <div>
             <Navbar />
             <div className="container mx-auto p-4">
-                <h1 className="text-2xl font-bold mb-4">Your Products</h1>
+                <h1 className="text-2xl font-bold mb-4 text-center">Your Products</h1>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 <div className={pageStyles.cardContainer}>
                     {products.map((product, index) => (

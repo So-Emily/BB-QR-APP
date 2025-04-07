@@ -3,6 +3,13 @@ import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar/Navbar";
 import ChartComponent from "@/components/ChartComponent"; // Adjust path as needed
 
+const capitalizeName = (name: string) => {
+  return name
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+};
+
 const Dashboard = () => {
   const { status, data: session } = useSession();
 
@@ -13,9 +20,9 @@ const Dashboard = () => {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-    if (status === "unauthenticated") {
-        return <div className="min-h-screen flex items-center justify-center">Unauthorized Access</div>;
-    }
+  if (status === "unauthenticated") {
+    return <div className="min-h-screen flex items-center justify-center">Unauthorized Access</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 text-black">
@@ -30,7 +37,9 @@ const Dashboard = () => {
             <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
               <span className="text-red-500 text-3xl font-bold">A</span>
             </div>
-            <h2 className="text-lg font-bold mb-4">Breakthru Beverage</h2>
+            <h2 className="text-lg font-bold mb-4">
+              {capitalizeName(session?.user?.name || "Supplier Name")}
+            </h2>
           </div>
           <div className="grid grid-cols-2 gap-4">
             {/* Placeholder items */}
@@ -58,6 +67,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
-
-// Switch functionality to store. Get mongo to use new objects. Find a way to fetch scans for both supplier and store. 

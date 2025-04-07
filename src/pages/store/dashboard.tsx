@@ -1,68 +1,69 @@
-// src/pages/store/dashboard.tsx
-import Navbar from '@/components/Navbar/Navbar';
-import { getSession } from 'next-auth/react';
-import { GetServerSideProps } from 'next';
-import styles from './Dashboard.module.css';
+import React from "react";
+import { useSession } from "next-auth/react";
+import Navbar from "@/components/Navbar/Navbar";
+import ChartComponent from "@/components/ChartComponent"; // Adjust path as needed
 
-const StoreDashboard = ({ username }: { username: string }) => {
-    const capitalizeFirstLetter = (string: string) => {
-        return string.charAt(0).toUpperCase() + string.slice(1);
-    };
-
-    console.log('Rendering StoreDashboard with username:', username);
-
-    return (
-        <div>
-            <Navbar />
-            <main>
-                <h1 className={styles.title}>Welcome, {capitalizeFirstLetter(username)}!</h1>
-            </main>
-        </div>
-    );
+const capitalizeName = (name: string) => {
+  return name
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
 };
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-    console.log('Fetching session and user data in getServerSideProps');
+const StoreDashboard = () => {
+  const { status, data: session } = useSession();
 
-    const session = await getSession(context);
+  // Replace this with the actual storeId from session
+  const storeId = session?.user?.id || "64c2f1e91ab0f1a1b8c7b6c2"; // Example storeId
 
-    if (!session) {
-        console.log('No session found, redirecting to sign-in page');
-        return {
-            redirect: {
-                destination: '/auth/signin',
-                permanent: false,
-            },
-        };
-    }
+  if (status === "loading") {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
 
-    try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user`, {
-            headers: {
-                cookie: context.req.headers.cookie || '',
-            },
-        });
+  if (status === "unauthenticated") {
+    return <div className="min-h-screen flex items-center justify-center">Unauthorized Access</div>;
+  }
 
-        if (!response.ok) {
-            throw new Error('Failed to fetch user data');
-        }
+  return (
+    <div className="min-h-screen bg-gray-100 text-black">
+      {/* Header */}
+      <Navbar />
 
-        const data = await response.json();
-        console.log('Fetched user data:', data);
+      {/* Main Content */}
+      <main className="p-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
+        {/* Left Panel */}
+        <section className="bg-white shadow-md rounded-lg p-6 w-full md:w-1/3">
+          <div className="flex flex-col items-center">
+            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+              <span className="text-blue-500 text-3xl font-bold">S</span>
+            </div>
+            <h2 className="text-lg font-bold mb-4">
+              {capitalizeName(session?.user?.name || "Store Name")}
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            {/* Placeholder items */}
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
+              <span className="text-sm">Top Product</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
+              <span className="text-sm">Top Supplier</span>
+            </div>
+          </div>
+        </section>
 
-        return {
-            props: {
-                username: data.name,
-            },
-        };
-    } catch (error) {
-        console.error('Error fetching user data:', error);
-        return {
-            props: {
-                username: '',
-            },
-        };
-    }
+        {/* Right Panel */}
+        <section className="bg-white shadow-md rounded-lg p-6 flex-1">
+          <h1 className="text-lg font-bold mb-4">Product Scan Count</h1>
+          <div className="h-64 bg-gray-200 flex items-center justify-center rounded">
+            <ChartComponent userId={storeId} />
+          </div>
+        </section>
+      </main>
+    </div>
+  );
 };
 
 export default StoreDashboard;
