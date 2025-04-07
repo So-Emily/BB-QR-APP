@@ -129,7 +129,7 @@ const PrintQRCodesPage = () => {
     return (
         <div>
             {session && session.user && <Navbar />}
-            <div className="container mx-auto p-4">
+            <div className="container mx-auto p-4" style={{ marginLeft: 15, paddingLeft: 0 }}>
                 <h1 className="text-2xl font-bold mb-4">Print QR Codes</h1>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
 

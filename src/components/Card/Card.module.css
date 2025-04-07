@@ -1,10 +1,10 @@
 .card {
-    perspective: 1000px;
+    perspective: 2000px;
     cursor: pointer;
-    width: 325px; 
+    width: 330px; 
     height: 500px; 
     margin-bottom: 60px;
-    border-radius: 10px;
+    border-radius: 5px;
     --card-border-color: inherit; /* Define CSS variable for border color */
 }
 
