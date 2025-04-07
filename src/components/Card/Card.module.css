@@ -45,6 +45,7 @@
     background-color: #fff;
     color: black;
     transform: rotateY(180deg);
+    font-size: .9rem; /* Adjust font size for back content */
 }
 
 .backgroundImageContainer {
@@ -168,8 +169,4 @@
     padding: 16px;
     width: 100%;
     text-align: center;
-}
-
-.cardBack .text-sm.mt-4 {
-    margin-top: 16px; /* Add margin to move the description down */
 }
