@@ -5,7 +5,7 @@ const HomePage = () => {
     return (
         <div>
             <Navbar />
-            <main className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+            <main className="flex flex-col items-center justify-center min-h-screen bg-green-900 text-white">
 
                 <h1 className="text-4xl font-bold mb-20">Welcome to the QR Code <br/><br/> Buddy Booze Application</h1>
 

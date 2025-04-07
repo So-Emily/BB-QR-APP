@@ -5,7 +5,6 @@ import { listFilesInS3, fetchProductDataFromS3 } from '@/lib/s3';
 import { QRCodeCanvas } from 'qrcode.react';
 import styles from '@/styles/print-qrcodes.module.css';
 
-// Define the QRCode interface
 interface QRCode {
     key: string;
     signedUrl: string;
@@ -19,17 +18,27 @@ const PrintQRCodesPage = () => {
     const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
     const [selectedQRCodes, setSelectedQRCodes] = useState<string[]>([]);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(true);
     const [qrCodeSize, setQRCodeSize] = useState(128); // Default size
     const [customSize, setCustomSize] = useState<string>(''); // Custom size input
 
     useEffect(() => {
         if (!session || !session.user) {
             setError('User not authenticated');
+            setLoading(false);
             return;
         }
 
         const fetchQRCodes = async () => {
             try {
+                // Check if QR codes are cached in localStorage
+                const cachedQRCodes = localStorage.getItem('printQRCodes');
+                if (cachedQRCodes) {
+                    setQRCodes(JSON.parse(cachedQRCodes));
+                    setLoading(false);
+                    return;
+                }
+
                 const userResponse = await fetch(`/api/user`);
                 if (!userResponse.ok) {
                     throw new Error('Failed to fetch user details');
@@ -39,6 +48,7 @@ const PrintQRCodesPage = () => {
                 const storeDetails = userData.storeDetails;
                 if (!storeDetails || storeDetails.length === 0) {
                     setError('Store details not found');
+                    setLoading(false);
                     return;
                 }
 
@@ -46,10 +56,7 @@ const PrintQRCodesPage = () => {
                 const supplierKeys = await listFilesInS3('suppliers/');
                 const supplierNames = supplierKeys
                     .filter((key): key is string => key !== undefined && key.includes('/stores/'))
-                    .map(key => {
-                        const parts = key.split('/');
-                        return parts.length > 1 ? parts[1] : '';
-                    });
+                    .map(key => key.split('/')[1]);
 
                 const qrCodePromises = supplierNames.flatMap(supplierName => {
                     if (!supplierName) return [];
@@ -60,13 +67,10 @@ const PrintQRCodesPage = () => {
                                 try {
                                     const productInfo = await fetchProductDataFromS3(key);
                                     const qrCodeKey = key.replace('info.json', `${productInfo.productName.replace(/\s+/g, '-').toLowerCase()}.svg`);
-
-                                    // Generate the correct URL for the QR code
                                     const qrCodeUrl = `${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${productInfo.supplierName}/${productInfo.storeName}-${productInfo.storeNumber}/${productInfo.productName}`;
-
                                     return {
                                         key: qrCodeKey,
-                                        signedUrl: qrCodeUrl, // Use qrCodeUrl directly as signedUrl
+                                        signedUrl: qrCodeUrl,
                                         productName: productInfo.productName,
                                         supplierName: productInfo.supplierName,
                                         storeName: `${productInfo.storeName}-${productInfo.storeNumber}`,
@@ -86,9 +90,14 @@ const PrintQRCodesPage = () => {
                 const uniqueQRCodes = Array.from(new Map(qrCodes.map(qrCode => [qrCode.key, qrCode])).values());
 
                 setQRCodes(uniqueQRCodes);
+
+                // Cache QR codes in localStorage
+                localStorage.setItem('printQRCodes', JSON.stringify(uniqueQRCodes));
             } catch (err) {
                 console.error('Failed to fetch QR codes:', err);
                 setError('Failed to fetch QR codes: ' + err);
+            } finally {
+                setLoading(false);
             }
         };
 
@@ -100,7 +109,6 @@ const PrintQRCodesPage = () => {
             alert('Please select at least one QR code to print.');
             return;
         }
-        // Print logic (e.g., render only selected QR codes for printing)
         window.print();
     };
 
@@ -125,6 +133,10 @@ const PrintQRCodesPage = () => {
         }
         setCustomSize(value);
     };
+
+    if (loading) {
+        return <div>Loading QR codes...</div>;
+    }
 
     return (
         <div>
@@ -190,12 +202,11 @@ const PrintQRCodesPage = () => {
 
                 {/* QR Code Display Section */}
                 <div className={styles.printContainer}>
-                    {/* Other page content */}
                     <div className={styles.printWrapper}>
                         <div
                             className={styles.printableGrid}
                             style={{
-                                gridTemplateColumns: `repeat(auto-fit, minmax(${qrCodeSize + 32}px, 1fr))`, // Adjust grid based on size
+                                gridTemplateColumns: `repeat(auto-fit, minmax(${qrCodeSize + 32}px, 1fr))`,
                             }}
                         >
                             {qrCodes
@@ -205,11 +216,10 @@ const PrintQRCodesPage = () => {
                                         <p className="text-xs text-center">{qrCode.productName}</p>
                                         <QRCodeCanvas
                                             value={qrCode.signedUrl}
-                                            size={qrCodeSize} // Use the selected size
+                                            size={qrCodeSize}
                                             level="H"
                                             includeMargin={true}
                                         />
-                                        <div className={styles.cutLine}></div>
                                     </div>
                                 ))}
                         </div>

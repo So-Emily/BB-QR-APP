@@ -1,6 +1,6 @@
-// src/components/Navbar/Navbar.tsx
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
+import Image from 'next/image'; 
 import styles from './Navbar.module.css';
 
 const Navbar = () => {
@@ -9,11 +9,26 @@ const Navbar = () => {
     return (
         <nav className={styles.navbar}>
             <ul className={styles.navList}>
-                <li>
-                    <Link href={session ? (session.user.role === 'supplier' ? '/supplier/dashboard' : '/store/dashboard') : '/'} passHref>
-                        <span role="link" className={styles.navItem}>Home</span>
+                {/* Logo */}
+                <li className={styles.logo}>
+                    <Link href="/" passHref>
+                        <Image
+                            src="/logo.png"
+                            alt="Booze Buddy Logo"
+                            width={100} 
+                            height={100}
+                            className={styles.logoImage}
+                            priority 
+                        />
                     </Link>
                 </li>
+                {status === 'authenticated' && (
+                    <li>
+                        <Link href={session.user.role === 'supplier' ? '/supplier/dashboard' : '/store/dashboard'} passHref>
+                            <span role="link" className={styles.navItem}>Home</span>
+                        </Link>
+                    </li>
+                )}
                 {status === 'authenticated' && session.user.role === 'supplier' && (
                     <>
                         <li>
@@ -26,14 +41,9 @@ const Navbar = () => {
                                 <span role="link" className={styles.navItem}>Send QR Codes</span>
                             </Link>
                         </li>
-                        {/* <li>
-                            <Link href="/supplier/qrcodes" passHref>
-                                <span role="link" className={styles.navItem}>QR Codes</span>
-                            </Link>
-                        </li> */}
                         <li>
                             <Link href="/supplier/add-product" passHref>
-                                <span role="link" className={styles.navItem}>Add Product</span>
+                                <button className={`${styles.navItem} ${styles.greenButton}`}>Add Product</button>
                             </Link>
                         </li>
                     </>
@@ -54,11 +64,16 @@ const Navbar = () => {
                 )}
                 <li className={styles.rightAligned}>
                     {status === 'authenticated' ? (
-                        <button onClick={() => signOut({ callbackUrl: '/' })} className={styles.navItem}>Logout</button>
+                        <button onClick={() => signOut({ callbackUrl: '/' })} className={`${styles.navItem} ${styles.grayButton}`}>
+                            Logout
+                        </button>
                     ) : (
-                        <Link href="/auth/signin" passHref>
-                            <span role="link" className={styles.navItem}>Login</span>
-                        </Link>
+                        <button
+                            onClick={() => window.location.href = '/auth/signin'}
+                            className={`${styles.navItem} ${styles.grayButton}`}
+                        >
+                            Login
+                        </button>
                     )}
                 </li>
             </ul>

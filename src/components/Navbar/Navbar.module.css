@@ -1,27 +1,73 @@
 .navbar {
-    background-color: gray;
-    padding: 16px;
+    background-color: #828282;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .navList {
     display: flex;
     gap: 16px;
     list-style-type: none;
-    justify-content: space-between;
-    width: 100%;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.logo {
+    margin-right: -8px; /* Add spacing between the logo and the Home link */
+}
+
+.logoImage {
+    height: 40px; /* Adjust the height of the logo */
+    width: auto; /* Maintain aspect ratio */
+    cursor: pointer;
 }
 
 .navItem {
     color: white;
     cursor: pointer;
+    padding: 8px 10px;
+    border-radius: 5px;
+    text-align: center;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .navItem:hover {
     color: lightgray;
 }
 
+.greenButton {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.greenButton:hover {
+    background-color: #218838;
+}
+
+.grayButton {
+    background-color: #3d3d3d;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.grayButton:hover {
+    background-color: #242424;
+}
+
 .rightAligned {
     margin-left: auto;
     display: flex;
-    gap: 16px;
+    align-items: center;
 }
