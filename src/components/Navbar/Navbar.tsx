@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
+import Image from 'next/image'; 
 import styles from './Navbar.module.css';
 
 const Navbar = () => {
@@ -11,7 +12,14 @@ const Navbar = () => {
                 {/* Logo */}
                 <li className={styles.logo}>
                     <Link href="/" passHref>
-                        <img src="/logo.png" alt="Booze Buddy Logo" className={styles.logoImage} />
+                        <Image
+                            src="/logo.png"
+                            alt="Booze Buddy Logo"
+                            width={100} 
+                            height={100}
+                            className={styles.logoImage}
+                            priority 
+                        />
                     </Link>
                 </li>
                 {status === 'authenticated' && (
