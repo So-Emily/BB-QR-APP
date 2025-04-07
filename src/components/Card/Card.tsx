@@ -108,12 +108,12 @@ const Card = ({ backgroundUrl, imageUrl, additionalContent, supplierName, cardSt
                         <h1 className="text-2xl font-bold">{capitalizeWords(supplierName)}</h1>
                         <p className="mt-4">{backsideDescription}</p>
                         <div className="flex justify-center mt-4">
-                            <FaRegCommentDots size={37} />
+                            <FaRegCommentDots size={32} />
                         </div>
                         
                         <p className="mt-4"><em>&quot;{backsideMessage}&quot;</em></p>
                         <div className="flex justify-center mt-4">
-                            <FaRegCalendarAlt size={37} />
+                            <FaRegCalendarAlt size={30} />
                         </div>
                         <p className="mt-4">Rescan the QR codes or visit here again during holidays and public events for updated themes and messages!</p>
                     </div>
