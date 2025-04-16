@@ -1,7 +1,8 @@
 .printableGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 16px;
+    display: flex;
+    flex-wrap: wrap; /* Allow items to wrap to the next row */
+    gap: 15px; /* Consistent gap between QR codes */
+    justify-content: flex-start; /* Align QR codes to the left */
     margin-top: 16px;
 }
 
@@ -9,28 +10,30 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* border-top: 1px dashed #ccc; */
-    /* border-bottom: 1px dashed #ccc; */
-    padding: 10px;
-    position: relative;
+    justify-content: center;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
 }
 
-.floatingButton {
-    position: fixed;
-    bottom: 16px;
-    right: 16px;
-    z-index: 1000;
+.printableItem canvas {
+    margin: 0;
 }
 
-/* Print-specific styles - only qr codes */
+.printableItem p {
+    margin: 0;
+    font-size: 9px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Print-specific styles */
 @media print {
-    /* Hide everything except the printWrapper */
     .printContainer > *:not(.printWrapper) {
         display: none !important;
         visibility: hidden !important;
     }
 
-    /* Show only the printWrapper and its children */
     .printWrapper {
         display: block !important;
         visibility: visible !important;
@@ -39,7 +42,7 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background: white; /* Optional: Ensure a white background for printing */
+        background: white;
     }
 
     .printWrapper * {
@@ -47,11 +50,11 @@
         visibility: visible !important;
     }
 
-    /* Ensure the grid layout for printing */
     .printableGrid {
-        display: grid !important;
-        grid-template-columns: repeat(auto, minmax(500px, 1fr)) !important; /* Replace with a static value */
-        gap: 7px !important; /* Space between items */
+        display: flex !important;
+        flex-wrap: wrap !important; /* Ensure items wrap to the next row */
+        gap: 10px !important; /* Consistent gap for cutting purposes */
+        justify-content: flex-start !important; /* Align QR codes to the left */
     }
 
     .printableItem {
@@ -60,23 +63,19 @@
         align-items: center !important;
         justify-content: center !important;
         text-align: center !important;
-        padding: 10px !important;
-        page-break-inside: avoid !important; /* Prevent QR codes from being split across pages */
-        box-sizing: border-box !important; 
-        /* Ensure padding is included in the width */
+        padding: 0 !important;
+        margin: 0 !important;
+        page-break-inside: avoid !important;
+        box-sizing: border-box !important;
     }
 
     .printableItem canvas {
-        width: auto !important; /* Allow QR codes to grow to their chosen size */
-        height: auto !important; /* Maintain aspect ratio */
+        margin: 0 !important;
     }
 
     .printableItem p {
-        margin-bottom: 8px !important; /* Space between the product name and the QR code */
-        font-size: 9px !important; /* Adjust font size as needed */
+        margin: 0 !important;
+        font-size: 9px !important;
         font-weight: bold !important;
-        /* overflow-wrap: break-word !important; 
-        word-wrap: break-word !important;
-        word-break: break-word !important; */
     }
 }
