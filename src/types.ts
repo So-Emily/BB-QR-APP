@@ -2,6 +2,7 @@ export interface Product {
     _id: string;
     id?: string;  
     name: string;
+    imageFile: string;
     description?: string;
     pairing: string[];
     taste: string[];
@@ -22,4 +23,5 @@ export interface Product {
     };
     status?: 'pending' | 'assigned';
     scanCount?: number;
+    storeId?: string;
 }

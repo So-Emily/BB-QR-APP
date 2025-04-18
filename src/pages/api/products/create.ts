@@ -1,5 +1,5 @@
 import { connectToDatabase } from '@/lib/mongodb';
-import Product from '@/models/Product';
+import ProductModel from '@/models/Product'; // Renamed for clarity
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -11,13 +11,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
         await connectToDatabase();
 
-        const { name, description, pairing, taste, location, imageUrl, backgroundUrl, styles, userId, } = req.body;
+        const { name, description, pairing, taste, location, imageUrl, backgroundUrl, styles, userId } = req.body;
 
         if (!name || !userId) {
             return res.status(400).json({ error: 'Product name and userId are required' });
         }
 
-        const newProduct = new Product({
+        const newProduct = new ProductModel({
             name,
             description,
             pairing,
@@ -27,10 +27,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             backgroundUrl,
             styles,
             userId, 
-            storeId: null, 
             status: 'pending', 
-            scanCount: 0,
-            lastScannedAt: null,
+            stores: [], 
+            createdAt: new Date(),
         });
 
         await newProduct.save();

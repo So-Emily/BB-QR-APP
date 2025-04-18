@@ -1,20 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar/Navbar";
-import ChartComponent from "@/components/ChartComponent"; // Adjust path as needed
-
-const capitalizeName = (name: string) => {
-  return name
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
-};
+import UserProfile from "@/components/UserProfile";
+import TopItem from "@/components/TopItem";
+import TopStore from "@/components/TopStore";
+import Filters from "@/components/Filters";
+import ChartComponent from "@/components/ChartComponent";
 
 const Dashboard = () => {
   const { status, data: session } = useSession();
-
-  // Replace this with the actual userId from session
-  const userId = session?.user?.id || "64c2f1e91ab0f1a1b8c7b6c2"; // Example userId
+  const userId = session?.user?.id;
+  const [selectedStore, setSelectedStore] = useState("all");
 
   if (status === "loading") {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -25,40 +21,71 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-400 text-black">
-      {/* Header */}
+    <div className="min-h-screen bg-gray-100 text-black">
       <Navbar />
 
-      {/* Main Content */}
-      <main className="p-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
+      <main className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 min-h-[calc(100vh-80px)]">
+
         {/* Left Panel */}
-        <section className="bg-gray-100 shadow-md rounded-lg p-6 w-full md:w-1/3">
-          <div className="flex flex-col items-center">
-            <div className="w-24 h-24 bg-gray-300 rounded-full flex items-center justify-center mb-4">
-              <span className="text-red-500 text-3xl font-bold">A</span>
+        <section className="bg-white shadow-md rounded-2xl p-6 flex flex-col items-center col-span-1">
+          <UserProfile />
+          
+          {/* Grid for 2x2 stat cards */}
+          <div className="grid grid-cols-2 gap-4 mt-6">
+            <TopItem />
+            <TopStore />
+            
+            {/* Placeholders styled like TopItem/TopStore */}
+            <div className="bg-white shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
+              <h2 className="text-md font-semibold flex items-center gap-2">
+                📦 Placeholder 1
+              </h2>
+              <div className="w-20 h-24 bg-gray-200 mt-2 rounded-md" />
+              <p className="text-gray-400 text-sm mt-2">(Coming Soon)</p>
             </div>
-            <h2 className="text-lg font-bold mb-4">
-              {capitalizeName(session?.user?.name || "Supplier Name")}
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {/* Placeholder items */}
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gray-300 rounded mb-2"></div>
-              <span className="text-sm">Top Item</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gray-300 rounded mb-2"></div>
-              <span className="text-sm">Top Store</span>
+
+            <div className="bg-white shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
+              <h2 className="text-md font-semibold flex items-center gap-2">
+                🔒 Placeholder 2
+              </h2>
+              <div className="w-20 h-24 bg-gray-200 mt-2 rounded-md" />
+              <p className="text-gray-400 text-sm mt-2">(Coming Soon)</p>
             </div>
           </div>
         </section>
 
-        {/* Right Panel */}
-        <section className="bg-gray-100 shadow-md rounded-lg p-6 flex-1">
-          <h1 className="text-lg font-bold mb-4">Product Scan Count Test</h1>
-          <div className="h-64 bg-gray-300 flex items-center justify-center rounded">
-            <ChartComponent userId={userId} />
+        {/* RIGHT SIDE WRAPPER */}
+        <section className="flex flex-col col-span-2 gap-6">
+          {/* ✅ Banner outside the chart box */}
+          <div className="bg-white h-60 rounded-xl shadow-inner flex items-center justify-center text-black-400">
+            Banner Placeholder
+          </div>
+
+          {/* Box that holds filters + chart */}
+          <div className="bg-white shadow-md rounded-2xl p-6 flex flex-col justify-between flex-grow h-full">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+  <Filters selectedStore={selectedStore} setSelectedStore={setSelectedStore} />
+
+  {/* 🔘 Tab-style buttons */}
+  <button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
+  Overview
+</button>
+<button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
+  By Store
+</button>
+<button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
+  Top 5
+</button>
+<button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
+  Daily
+</button>
+<button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
+  Monthly
+</button>
+
+</div>
+
+            <ChartComponent userId={userId!} selectedStore={selectedStore} />
           </div>
         </section>
       </main>
