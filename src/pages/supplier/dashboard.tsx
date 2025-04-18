@@ -1,56 +1,50 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar/Navbar";
-import ChartComponent from "@/components/ChartComponent"; // Adjust path as needed
+import UserProfile from "@/components/UserProfile";
+import TopItem from "@/components/TopItem";
+import TopStore from "@/components/TopStore";
+import Filters from "@/components/Filters";
+import ChartComponent from "@/components/ChartComponent";
 
 const Dashboard = () => {
   const { status, data: session } = useSession();
 
-  // Replace this with the actual userId from session
-  const userId = session?.user?.id || "64c2f1e91ab0f1a1b8c7b6c2"; // Example userId
+  // Replace this with actual userId from session
+  const userId = session?.user?.id
+
+  // 🛠️ NEW: State for selected store
+  const [selectedStore, setSelectedStore] = useState("all");
 
   if (status === "loading") {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-    if (status === "unauthenticated") {
-        return <div className="min-h-screen flex items-center justify-center">Unauthorized Access</div>;
-    }
+  if (status === "unauthenticated") {
+    return <div className="min-h-screen flex items-center justify-center">Unauthorized Access</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 text-black">
-      {/* Header */}
       <Navbar />
 
-      {/* Main Content */}
-      <main className="p-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
-        {/* Left Panel */}
-        <section className="bg-white shadow-md rounded-lg p-6 w-full md:w-1/3">
-          <div className="flex flex-col items-center">
-            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-              <span className="text-red-500 text-3xl font-bold">A</span>
-            </div>
-            <h2 className="text-lg font-bold mb-4">Breakthru Beverage</h2>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {/* Placeholder items */}
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
-              <span className="text-sm">Top Item</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
-              <span className="text-sm">Top Store</span>
-            </div>
+      {/* Grid Layout for Dashboard */}
+      <main className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+        {/* Left Panel: User Info & Top Stats */}
+        <section className="bg-white shadow-md rounded-lg p-6 flex flex-col items-center col-span-1">
+          <UserProfile />
+          <div className="flex space-x-4 mt-4">
+          <TopItem />
+          <TopStore />
+
           </div>
         </section>
 
-        {/* Right Panel */}
-        <section className="bg-white shadow-md rounded-lg p-6 flex-1">
-          <h1 className="text-lg font-bold mb-4">Product Scan Count Test</h1>
-          <div className="h-64 bg-gray-200 flex items-center justify-center rounded">
-            <ChartComponent userId={userId} />
-          </div>
+        {/* Right Panel: Filters + Chart */}
+        <section className="bg-white shadow-md rounded-lg p-6 flex flex-col col-span-2">
+          <Filters selectedStore={selectedStore} setSelectedStore={setSelectedStore} />
+          <ChartComponent userId={userId!} selectedStore={selectedStore} />
+
         </section>
       </main>
     </div>
@@ -60,4 +54,8 @@ const Dashboard = () => {
 export default Dashboard;
 
 
-// Switch functionality to store. Get mongo to use new objects. Find a way to fetch scans for both supplier and store. 
+//add hover over scans
+// remove scan names below
+// Add hover number to top store/product
+// add dashboard to store page
+// add mobile functionality

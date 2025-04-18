@@ -1,6 +1,7 @@
 export interface Product {
     _id: string;  
     name: string;
+    imageFile: string;
     description?: string;
     pairing: string[];
     taste: string[];

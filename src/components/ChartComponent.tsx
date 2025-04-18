@@ -15,10 +15,11 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 interface ProductData {
   name: string;
-  scanCount: number;
+  totalScans: number;
+  perStoreScans: { storeId: string; scanCount: number }[];
 }
 
-const ChartComponent = ({ userId }: { userId: string }) => {
+const ChartComponent = ({ userId, selectedStore }: { userId: string; selectedStore: string }) => {
   const [chartData, setChartData] = useState<ChartData<"bar"> | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,22 +33,40 @@ const ChartComponent = ({ userId }: { userId: string }) => {
 
         const data: ProductData[] = await response.json();
 
-        // Transform data for Chart.js
-        const labels = data.map((item) => item.name);
-        const counts = data.map((item) => item.scanCount);
+        // 🔹 Filter based on selected store
+        const filteredData = data.map((item) => {
+          if (selectedStore === "all") {
+            return {
+              name: item.name,
+              scanCount: item.totalScans, // Show total scans across all stores
+            };
+          } else {
+            const storeData = item.perStoreScans.find((store) => store.storeId === selectedStore);
+            return {
+              name: item.name,
+              scanCount: storeData ? storeData.scanCount : 0, // Show scans only for selected store
+            };
+          }
+        });
+
+        const sortedData = [...filteredData].sort((a, b) => b.scanCount - a.scanCount);
+        
+        const labels = sortedData.map((item) => item.name);
+        const scanCounts = sortedData.map((item) => item.scanCount);
 
         setChartData({
           labels,
           datasets: [
             {
-              label: "Scan Count",
-              data: counts,
+              label: "Total Scans per Product",
+              data: scanCounts,
               backgroundColor: "rgba(75, 192, 192, 0.2)",
               borderColor: "rgba(75, 192, 192, 1)",
               borderWidth: 1,
             },
           ],
         });
+
       } catch (error) {
         console.error("Error fetching chart data:", error);
       } finally {
@@ -56,7 +75,7 @@ const ChartComponent = ({ userId }: { userId: string }) => {
     };
 
     fetchChartData();
-  }, [userId]);
+  }, [userId, selectedStore]); // 🔹 Re-fetch data when the store changes
 
   if (loading) {
     return <div>Loading chart data...</div>;
@@ -67,34 +86,44 @@ const ChartComponent = ({ userId }: { userId: string }) => {
   }
 
   return (
-    <Bar
-      data={chartData}
-      options={{
-        responsive: true,
-        plugins: {
-          legend: {
-            display: true,
-            position: "top",
-          },
-        },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: "Products",
+    <div className="w-full max-w-3xl mx-auto h-80 flex items-center justify-center">
+      
+      <div className="bg-white shadow-md rounded-lg p-4 w-full h-full">
+        <Bar
+          data={chartData}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false,
+                position: "top",
+              },
             },
-          },
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: "Scan Count",
+            scales: {
+              x: {
+                title: {
+                  display: false,
+                  text: "Products",
+                },
+                ticks: {
+                  display: false,
+                }
+              },
+              y: {
+                beginAtZero: true,
+                title: {
+                  display: false,
+                  text: "Scan Count",
+                },
+              },
             },
-          },
-        },
-      }}
-    />
+          }}
+        />
+      </div>
+    </div>
   );
-};
+
+}
 
 export default ChartComponent;
