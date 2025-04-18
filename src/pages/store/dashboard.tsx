@@ -58,7 +58,7 @@ const StoreDashboard = () => {
         <section className="bg-white shadow-md rounded-lg p-6 flex-1">
           <h1 className="text-lg font-bold mb-4">Product Scan Count</h1>
           <div className="h-64 bg-gray-200 flex items-center justify-center rounded">
-            <ChartComponent userId={storeId} />
+            <ChartComponent userId={storeId} selectedStore={""} />
           </div>
         </section>
       </main>
