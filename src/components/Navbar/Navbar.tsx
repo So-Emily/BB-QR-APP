@@ -52,12 +52,17 @@ const Navbar = () => {
                     <>
                         <li>
                             <Link href="/store/download-qrcodes" passHref>
-                                <span role="link" className={styles.navItem}>Download QR Codes</span>
+                                <span role="link" className={styles.navItem}>QR Codes</span>
+                            </Link>
+                        </li>
+                        <li>
+                            <Link href="/store/suppliers" passHref>
+                                <span role="link" className={styles.navItem}>Suppliers</span>
                             </Link>
                         </li>
                         <li>
                             <Link href="/store/print-qrcodes" passHref>
-                                <span role="link" className={styles.navItem}>Print QR Codes</span>
+                            <button className={`${styles.navItem} ${styles.greenButton}`}>Print QR Codes</button>
                             </Link>
                         </li>
                     </>
@@ -65,7 +70,7 @@ const Navbar = () => {
                 <li className={styles.rightAligned}>
                     {status === 'authenticated' ? (
                         <button onClick={() => signOut({ callbackUrl: '/' })} className={`${styles.navItem} ${styles.grayButton}`}>
-                            Logout
+                            Sign out
                         </button>
                     ) : (
                         <button

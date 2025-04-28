@@ -3,7 +3,7 @@ import { useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar/Navbar';
 import { listFilesInS3, getSignedUrlForS3, fetchProductDataFromS3 } from '@/lib/s3';
 import { QRCodeCanvas } from 'qrcode.react';
-import Link from 'next/link';
+//import Link from 'next/link';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
@@ -20,6 +20,24 @@ const DownloadQRCodesPage = () => {
     const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
+    const [hoveredQRCode, setHoveredQRCode] = useState<string | null>(null);
+    const [selectedQRCode, setSelectedQRCodes] = useState<QRCode | null>(null);
+
+    const handleMouseEnter = (key: string) => {
+        setHoveredQRCode(key);
+    };
+
+    const handleMouseLeave = () => {
+        setHoveredQRCode(null);
+    };
+
+    const handleQRCodeClick = (qrCode: QRCode) => {
+        setSelectedQRCodes(qrCode);
+    };
+
+    const closeMenu = () => {
+        setSelectedQRCodes(null);
+    };
 
     useEffect(() => {
         if (!session || !session.user) {
@@ -31,14 +49,6 @@ const DownloadQRCodesPage = () => {
 
         const fetchQRCodes = async () => {
             try {
-                // Check if QR codes are cached in localStorage
-                const cachedQRCodes = localStorage.getItem('qrCodes');
-                if (cachedQRCodes) {
-                    setQRCodes(JSON.parse(cachedQRCodes));
-                    setLoading(false);
-                    return;
-                }
-
                 const userResponse = await fetch(`/api/user`);
                 if (!userResponse.ok) {
                     throw new Error('Failed to fetch user details');
@@ -88,10 +98,20 @@ const DownloadQRCodesPage = () => {
 
                 // Remove duplicates and save to state
                 const uniqueQRCodes = Array.from(new Map(qrCodes.map(qrCode => [qrCode.key, qrCode])).values());
-                setQRCodes(uniqueQRCodes);
 
-                // Cache QR codes in localStorage
-                localStorage.setItem('qrCodes', JSON.stringify(uniqueQRCodes));
+                // Compare with cached QR codes
+                const cachedQRCodes = JSON.parse(localStorage.getItem('qrCodes') || '[]');
+                const cachedKeys = new Set(cachedQRCodes.map((qrCode: QRCode) => qrCode.key));
+                const newQRCodes = uniqueQRCodes.filter(qrCode => !cachedKeys.has(qrCode.key));
+
+                if (newQRCodes.length > 0) {
+                    // Update local storage with new QR codes
+                    const updatedQRCodes = [...cachedQRCodes, ...newQRCodes];
+                    localStorage.setItem('qrCodes', JSON.stringify(updatedQRCodes));
+                    setQRCodes(updatedQRCodes);
+                } else {
+                    setQRCodes(cachedQRCodes);
+                }
             } catch (err) {
                 console.error('Failed to fetch QR codes:', err);
                 setError('Failed to fetch QR codes: ' + err);
@@ -142,11 +162,18 @@ const DownloadQRCodesPage = () => {
         return <div>Loading QR codes...</div>;
     }
 
+    const formatProductName = (name: string) => {
+        return name
+            .split('-') // Split the name by dashes
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
+            .join(' '); // Join the words with spaces
+    };
+
     return (
-        <div>
+        <div className="bg-customGray-500 min-h-screen">
             <Navbar />
-            <div className="container mx-auto p-4" style={{ marginLeft: 15, paddingLeft: 0 }}>
-                <h1 className="text-2xl font-bold mb-4">Download QR Codes</h1>
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <h1 className="text-2xl font-bold mb-4">QR Codes</h1>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 <button
                     onClick={handleBulkDownload}
@@ -154,32 +181,80 @@ const DownloadQRCodesPage = () => {
                 >
                     Download All QR Codes
                 </button>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {qrCodes.map((qrCode, index) => (
-                        <div key={index} className="border rounded shadow p-4 flex flex-col items-center mb-4">
-                            <h2 className="text-xl font-bold mt-4 text-center">{qrCode.productName}</h2>
-                            <p className="text-center">Supplier: {qrCode.supplierName}</p>
-                            <QRCodeCanvas
-                                value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`}
-                                size={128}
-                                level="H"
-                                includeMargin={true}
-                            />
-                            <Link href={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`} passHref>
-                                <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                                    View Product Page
-                                </button>
-                            </Link>
-                            <button
-                                onClick={() => handleDownload(qrCode)}
-                                className="mt-2 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                <div className="rounded-lg bg-customGray-400 p-6 shadow-md">
+                    <div className="grid grid-cols-2 sm:grid-cols-7 md:grid-cols-5 lg:grid-cols-8 gap-5">
+                        {qrCodes.map((qrCode, index) => (
+                            <div
+                                key={index}
+                                className="relative flex flex-col items-center"
+                                onMouseEnter={() => handleMouseEnter(qrCode.key)}
+                                onMouseLeave={handleMouseLeave}
+                                onClick={() => handleQRCodeClick(qrCode)} // Open the menu on click
                             >
-                                Download QR Code
-                            </button>
-                        </div>
-                    ))}
+                                <QRCodeCanvas
+                                    value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`}
+                                    size={128}
+                                    level="H"
+                                    includeMargin={true}
+                                />
+                                <h2 className="mt-2 text-lg font-semibold text-center">{formatProductName(qrCode.productName)}</h2>
+                                
+                                {/* qr hover pop up with names */}
+                                {hoveredQRCode === qrCode.key && (
+                                    <div
+                                        className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-white text-black text-m p-4 rounded shadow-lg"
+                                        style={{
+                                            minWidth: '200px',
+                                            textAlign: 'left',
+                                            backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                                            opacity: 0.95, 
+                                        }}
+                                    >
+                                        <p><strong>Supplier:</strong> {qrCode.supplierName}</p>
+                                        <p><strong>Item:</strong> {formatProductName(qrCode.productName)}</p>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
+
+            {/* Modal for QR Code Menu */}
+            {selectedQRCode && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                    <div className="bg-white p-6 rounded shadow-lg">
+                        {/* Make the text black */}
+                        <h2 className="text-xl font-bold mb-4 text-black">
+                            Options for {formatProductName(selectedQRCode.productName)}
+                        </h2>
+                        <button
+                            onClick={() => {
+                                window.open(
+                                    `${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${selectedQRCode.supplierName}/${selectedQRCode.storeName}/${selectedQRCode.productName}`,
+                                    '_blank',
+                                    'noopener,noreferrer'
+                                );
+                            }}
+                            className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 w-full"
+                        >
+                            View Product Page
+                        </button>
+                        <button
+                            onClick={() => handleDownload(selectedQRCode)}
+                            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 w-full"
+                        >
+                            Download QR Code
+                        </button>
+                        <button
+                            onClick={closeMenu}
+                            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 w-full"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
