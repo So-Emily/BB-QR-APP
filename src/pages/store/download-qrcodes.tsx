@@ -3,7 +3,7 @@ import { useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar/Navbar';
 import { listFilesInS3, getSignedUrlForS3, fetchProductDataFromS3 } from '@/lib/s3';
 import { QRCodeCanvas } from 'qrcode.react';
-import Link from 'next/link';
+//import Link from 'next/link';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
@@ -20,6 +20,24 @@ const DownloadQRCodesPage = () => {
     const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
+    const [hoveredQRCode, setHoveredQRCode] = useState<string | null>(null);
+    const [selectedQRCode, setSelectedQRCodes] = useState<QRCode | null>(null);
+
+    const handleMouseEnter = (key: string) => {
+        setHoveredQRCode(key);
+    };
+
+    const handleMouseLeave = () => {
+        setHoveredQRCode(null);
+    };
+
+    const handleQRCodeClick = (qrCode: QRCode) => {
+        setSelectedQRCodes(qrCode);
+    };
+
+    const closeMenu = () => {
+        setSelectedQRCodes(null);
+    };
 
     useEffect(() => {
         if (!session || !session.user) {
@@ -156,35 +174,70 @@ const DownloadQRCodesPage = () => {
                 >
                     Download All QR Codes
                 </button>
-                {/* New container for all QR codes */}
                 <div className="rounded-lg bg-customGray-400 p-6 shadow-md">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-7 md:grid-cols-5 lg:grid-cols-8 gap-5">
                         {qrCodes.map((qrCode, index) => (
-                            <div key={index} className="flex flex-col items-center">
-                                <h2 className="text-xl font-bold mt-4 text-center">{qrCode.productName}</h2>
-                                <p className="text-center">Supplier: {qrCode.supplierName}</p>
+                            <div
+                                key={index}
+                                className="relative flex flex-col items-center"
+                                onMouseEnter={() => handleMouseEnter(qrCode.key)}
+                                onMouseLeave={handleMouseLeave}
+                                onClick={() => handleQRCodeClick(qrCode)} // Open the menu on click
+                            >
                                 <QRCodeCanvas
                                     value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`}
                                     size={128}
                                     level="H"
                                     includeMargin={true}
                                 />
-                                <Link href={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`} passHref>
-                                    <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                                        View Product Page
-                                    </button>
-                                </Link>
-                                <button
-                                    onClick={() => handleDownload(qrCode)}
-                                    className="mt-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
-                                >
-                                    Download QR Code
-                                </button>
+                                <h2 className="mt-2 text-lg font-semibold text-center">{qrCode.productName}</h2>
+                                {hoveredQRCode === qrCode.key && (
+                                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-white text-black text-sm p-2 rounded shadow-lg">
+                                        <p><strong>Supplier:</strong> {qrCode.supplierName}</p>
+                                        <p><strong>Item:</strong> {qrCode.productName}</p>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
                 </div>
             </div>
+
+            {/* Modal for QR Code Menu */}
+            {selectedQRCode && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                    <div className="bg-white p-6 rounded shadow-lg">
+                        {/* Make the text black */}
+                        <h2 className="text-xl font-bold mb-4 text-black">
+                            Options for {selectedQRCode.productName}
+                        </h2>
+                        <button
+                            onClick={() => {
+                                window.open(
+                                    `${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${selectedQRCode.supplierName}/${selectedQRCode.storeName}/${selectedQRCode.productName}`,
+                                    '_blank',
+                                    'noopener,noreferrer'
+                                );
+                            }}
+                            className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 w-full"
+                        >
+                            View Product Page
+                        </button>
+                        <button
+                            onClick={() => handleDownload(selectedQRCode)}
+                            className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 w-full"
+                        >
+                            Download QR Code
+                        </button>
+                        <button
+                            onClick={closeMenu}
+                            className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 w-full"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
