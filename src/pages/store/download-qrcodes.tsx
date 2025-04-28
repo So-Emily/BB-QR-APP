@@ -162,6 +162,13 @@ const DownloadQRCodesPage = () => {
         return <div>Loading QR codes...</div>;
     }
 
+    const formatProductName = (name: string) => {
+        return name
+            .split('-') // Split the name by dashes
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
+            .join(' '); // Join the words with spaces
+    };
+
     return (
         <div className="bg-customGray-500 min-h-screen">
             <Navbar />
@@ -190,11 +197,21 @@ const DownloadQRCodesPage = () => {
                                     level="H"
                                     includeMargin={true}
                                 />
-                                <h2 className="mt-2 text-lg font-semibold text-center">{qrCode.productName}</h2>
+                                <h2 className="mt-2 text-lg font-semibold text-center">{formatProductName(qrCode.productName)}</h2>
+                                
+                                {/* qr hover pop up with names */}
                                 {hoveredQRCode === qrCode.key && (
-                                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-white text-black text-sm p-2 rounded shadow-lg">
+                                    <div
+                                        className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-white text-black text-m p-4 rounded shadow-lg"
+                                        style={{
+                                            minWidth: '200px',
+                                            textAlign: 'left',
+                                            backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                                            opacity: 0.95, 
+                                        }}
+                                    >
                                         <p><strong>Supplier:</strong> {qrCode.supplierName}</p>
-                                        <p><strong>Item:</strong> {qrCode.productName}</p>
+                                        <p><strong>Item:</strong> {formatProductName(qrCode.productName)}</p>
                                     </div>
                                 )}
                             </div>
@@ -209,7 +226,7 @@ const DownloadQRCodesPage = () => {
                     <div className="bg-white p-6 rounded shadow-lg">
                         {/* Make the text black */}
                         <h2 className="text-xl font-bold mb-4 text-black">
-                            Options for {selectedQRCode.productName}
+                            Options for {formatProductName(selectedQRCode.productName)}
                         </h2>
                         <button
                             onClick={() => {
