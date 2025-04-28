@@ -49,18 +49,17 @@ const Card = ({ backgroundUrl, imageUrl, additionalContent, supplierName, cardSt
                             <Image
                                 src={backgroundUrl}
                                 alt="Background"
-                                layout="fill"
-                                objectFit="cover"
+                                fill
+                                style={{ objectFit: 'cover' }} // Updated to use the style prop
                             />
                         )}
                         <div className={styles.productImageContainer}>
                             <Image
                                 src={imageUrl}
                                 alt="Product"
-                                layout="intrinsic"
                                 width={200}
                                 height={200}
-                                objectFit="contain"
+                                style={{ objectFit: 'contain' }} // Updated to use the style prop
                             />
                         </div>
                     </div>
