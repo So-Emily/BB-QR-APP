@@ -145,9 +145,9 @@ const DownloadQRCodesPage = () => {
     }
 
     return (
-        <div>
+        <div className="bg-customGray-500 min-h-screen">
             <Navbar />
-            <div className="container mx-auto p-4" style={{ marginLeft: 15, paddingLeft: 0 }}>
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <h1 className="text-2xl font-bold mb-4">QR Codes</h1>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 <button
@@ -156,30 +156,33 @@ const DownloadQRCodesPage = () => {
                 >
                     Download All QR Codes
                 </button>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {qrCodes.map((qrCode, index) => (
-                        <div key={index} className="border rounded shadow p-4 flex flex-col items-center mb-4">
-                            <h2 className="text-xl font-bold mt-4 text-center">{qrCode.productName}</h2>
-                            <p className="text-center">Supplier: {qrCode.supplierName}</p>
-                            <QRCodeCanvas
-                                value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`}
-                                size={128}
-                                level="H"
-                                includeMargin={true}
-                            />
-                            <Link href={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`} passHref>
-                                <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                                    View Product Page
+                {/* New container for all QR codes */}
+                <div className="rounded-lg bg-customGray-400 p-6 shadow-md">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                        {qrCodes.map((qrCode, index) => (
+                            <div key={index} className="flex flex-col items-center">
+                                <h2 className="text-xl font-bold mt-4 text-center">{qrCode.productName}</h2>
+                                <p className="text-center">Supplier: {qrCode.supplierName}</p>
+                                <QRCodeCanvas
+                                    value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`}
+                                    size={128}
+                                    level="H"
+                                    includeMargin={true}
+                                />
+                                <Link href={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`} passHref>
+                                    <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                                        View Product Page
+                                    </button>
+                                </Link>
+                                <button
+                                    onClick={() => handleDownload(qrCode)}
+                                    className="mt-2 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                                >
+                                    Download QR Code
                                 </button>
-                            </Link>
-                            <button
-                                onClick={() => handleDownload(qrCode)}
-                                className="mt-2 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-                            >
-                                Download QR Code
-                            </button>
-                        </div>
-                    ))}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>

@@ -70,7 +70,7 @@ const Navbar = () => {
                 <li className={styles.rightAligned}>
                     {status === 'authenticated' ? (
                         <button onClick={() => signOut({ callbackUrl: '/' })} className={`${styles.navItem} ${styles.grayButton}`}>
-                            Logout
+                            Sign out
                         </button>
                     ) : (
                         <button
