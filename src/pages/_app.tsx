@@ -25,6 +25,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
             const storeManagerPaths = [
                 '/store/dashboard',
                 '/store/download-qrcodes',
+                '/store/suppliers',
                 '/store/print-qrcodes',
 
                 '/store/products/[supplierName]/[storeName]/[productName]',

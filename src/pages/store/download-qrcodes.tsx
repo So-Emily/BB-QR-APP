@@ -31,14 +31,6 @@ const DownloadQRCodesPage = () => {
 
         const fetchQRCodes = async () => {
             try {
-                // Check if QR codes are cached in localStorage
-                const cachedQRCodes = localStorage.getItem('qrCodes');
-                if (cachedQRCodes) {
-                    setQRCodes(JSON.parse(cachedQRCodes));
-                    setLoading(false);
-                    return;
-                }
-
                 const userResponse = await fetch(`/api/user`);
                 if (!userResponse.ok) {
                     throw new Error('Failed to fetch user details');
@@ -88,10 +80,20 @@ const DownloadQRCodesPage = () => {
 
                 // Remove duplicates and save to state
                 const uniqueQRCodes = Array.from(new Map(qrCodes.map(qrCode => [qrCode.key, qrCode])).values());
-                setQRCodes(uniqueQRCodes);
 
-                // Cache QR codes in localStorage
-                localStorage.setItem('qrCodes', JSON.stringify(uniqueQRCodes));
+                // Compare with cached QR codes
+                const cachedQRCodes = JSON.parse(localStorage.getItem('qrCodes') || '[]');
+                const cachedKeys = new Set(cachedQRCodes.map((qrCode: QRCode) => qrCode.key));
+                const newQRCodes = uniqueQRCodes.filter(qrCode => !cachedKeys.has(qrCode.key));
+
+                if (newQRCodes.length > 0) {
+                    // Update local storage with new QR codes
+                    const updatedQRCodes = [...cachedQRCodes, ...newQRCodes];
+                    localStorage.setItem('qrCodes', JSON.stringify(updatedQRCodes));
+                    setQRCodes(updatedQRCodes);
+                } else {
+                    setQRCodes(cachedQRCodes);
+                }
             } catch (err) {
                 console.error('Failed to fetch QR codes:', err);
                 setError('Failed to fetch QR codes: ' + err);
@@ -146,7 +148,7 @@ const DownloadQRCodesPage = () => {
         <div>
             <Navbar />
             <div className="container mx-auto p-4" style={{ marginLeft: 15, paddingLeft: 0 }}>
-                <h1 className="text-2xl font-bold mb-4">Download QR Codes</h1>
+                <h1 className="text-2xl font-bold mb-4">QR Codes</h1>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
                 <button
                     onClick={handleBulkDownload}
