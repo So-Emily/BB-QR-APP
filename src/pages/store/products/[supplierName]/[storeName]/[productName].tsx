@@ -7,20 +7,23 @@ import { useSession } from 'next-auth/react';
 import Card from '@/components/Card/Card';
 import ProductModel from '@/models/Product';
 import { connectToDatabase } from '@/lib/mongodb';
+
 interface StoreProductPageProps {
-    product: Product;
+    product: Product | null;
     supplierName: string;
     storeName: string;
     backsideInfo: { description: string; message: string };
 }
+
 const StoreProductPage = ({ product, supplierName, backsideInfo }: StoreProductPageProps) => {
     const { data: session } = useSession(); // Get session data to check if the user is logged in
     const [error, setError] = useState('');
+
     // Track scan count when the page loads
     useEffect(() => {
         const trackScan = async () => {
-            if (!product._id) {
-                console.error('Product ID is missing. Cannot track scan count.');
+            if (!product || !product._id) {
+                console.error('Product or Product ID is missing. Cannot track scan count.');
                 return;
             }
             try {
@@ -38,11 +41,17 @@ const StoreProductPage = ({ product, supplierName, backsideInfo }: StoreProductP
             }
         };
         trackScan();
-    }, [product._id]);
+    }, [product]);
+
     // If the product is not found, display a message
     if (!product) {
-        return <div>Product not found</div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <p className="text-red-500 text-center">Product data is incomplete. Some features may not be available.</p>
+            </div>
+        );
     }
+
     return (
         <div>
             {/* Show the Navbar only if the user is logged in */}
@@ -68,8 +77,12 @@ const StoreProductPage = ({ product, supplierName, backsideInfo }: StoreProductP
         </div>
     );
 };
+
 export const getServerSideProps: GetServerSideProps = async (context) => {
     const { supplierName, storeName, productName } = context.params as { supplierName: string; storeName: string; productName: string };
+
+    let productData = null;
+    let backsideInfo = { description: '', message: '' };
 
     try {
         await connectToDatabase();
@@ -90,51 +103,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
                 name: { $regex: new RegExp(`^${formattedProductName}$`, "i") }
             }
         );
-        
-        // ✅ Extract storeId from the stores array
-        const storeDetails = product?.stores.find((store: { storeId: string; }) => store.storeId === storeName);
-        const storeId = storeDetails ? storeDetails.storeId : null;
-        
-        if (!storeId) {
-            console.error(`❌ Store '${storeName}' not found for product '${productName}'`);
-            return { props: { product: null, error: "Store not found" } };
+
+        if (product) {
+            console.log(`✅ Found Product: ${product.name}`);
+        } else {
+            console.warn(`⚠️ Product not found in MongoDB for ${formattedProductName} at ${storeName}`);
         }
-        
-        console.log(`✅ Found Product: ${product.name} with Store ID: ${storeId}`);
-        
-
-        console.log("📋 Product from DB:", product);
-
-        if (!product) {
-            console.error(`❌ Product not found in DB for ${formattedProductName} at ${storeName}`);
-            return { props: { product: null, error: "Product not found" } };
-        }
-
-        console.log(`✅ Found Product: ${product.name} with Store ID: ${product.storeId}`);
-
-        // 🔹 NEW: Send scan request to increment scan count
-        console.log("📤 Sending scan request with:", { 
-            supplierName, 
-            productName: formattedProductName, 
-            storeId: storeId 
-
-        });
-
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/increment-scan`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                supplierName, 
-                productName: formattedProductName, 
-                storeId: storeId 
- 
-            }),
-        });
 
         // ✅ Fetch product data from S3
-        const productData = await fetchProductDataFromS3(`suppliers/${supplierName}/products/${productName}/product.json`);
+        productData = await fetchProductDataFromS3(`suppliers/${supplierName}/products/${productName}/product.json`);
         const backsideInfoKey = `suppliers/${supplierName}/backsideInfo.json`;
-        let backsideInfo = { description: '', message: '' };
 
         try {
             backsideInfo = await fetchProductDataFromS3(backsideInfoKey);
@@ -146,18 +124,23 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
             props: {
                 product: productData,
                 storeName,
-                storeId: storeId,
                 supplierName,
                 backsideInfo,
+                mongoProduct: product || null, // Include MongoDB product if found
             },
         };
     } catch (err) {
         console.error('Failed to fetch product data:', err);
         return {
             props: {
-                product: null,
+                product: productData, // Return S3 data even if MongoDB fails
+                storeName,
+                supplierName,
+                backsideInfo,
+                mongoProduct: null,
             },
         };
     }
 };
+
 export default StoreProductPage;
