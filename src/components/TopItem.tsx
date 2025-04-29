@@ -26,13 +26,13 @@ const TopItem = () => {
   }, [session, status]);
 
   return (
-    <div className="bg-white shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
+    <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
       <h2 className="text-md font-semibold flex items-center gap-2">
         🔥 Top Product
       </h2>
       {topItem ? (
         <>
-          <img src={topItem.image} alt={topItem.name} className="w-20 h-32 object-cover mt-2 rounded-md shadow-md" />
+          <img src={topItem.image} alt={topItem.name} className="w-20 h-32 object-cover mt-2 rounded-md" />
           <p className="text-lg font-bold text-center mt-3">{topItem.name}</p>
           <p className="text-gray-600 text-sm">({topItem.totalScans} scans)</p>
         </>

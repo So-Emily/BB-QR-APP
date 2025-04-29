@@ -21,22 +21,22 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 text-black">
+    <div className="min-h-screen bg-customGray-500 text-black">
       <Navbar />
 
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 min-h-[calc(100vh-80px)]">
 
         {/* Left Panel */}
-        <section className="bg-white shadow-md rounded-2xl p-6 flex flex-col items-center col-span-1">
+        <section className="bg-customGray-300 shadow-md rounded-2xl p-6 flex flex-col items-center col-span-1">
           <UserProfile />
           
           {/* Grid for 2x2 stat cards */}
-          <div className="grid grid-cols-2 gap-4 mt-6">
+          <div className="bg-customGray-400 p-8 rounded-2xl grid grid-cols-2 gap-4 mt-6">
             <TopItem />
             <TopStore />
             
-            {/* Placeholders styled like TopItem/TopStore */}
-            <div className="bg-white shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
+            {/* Placeholders */}
+            <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
               <h2 className="text-md font-semibold flex items-center gap-2">
                 📦 Placeholder 1
               </h2>
@@ -44,7 +44,7 @@ const Dashboard = () => {
               <p className="text-gray-400 text-sm mt-2">(Coming Soon)</p>
             </div>
 
-            <div className="bg-white shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
+            <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
               <h2 className="text-md font-semibold flex items-center gap-2">
                 🔒 Placeholder 2
               </h2>
@@ -57,12 +57,12 @@ const Dashboard = () => {
         {/* RIGHT SIDE WRAPPER */}
         <section className="flex flex-col col-span-2 gap-6">
           {/* ✅ Banner outside the chart box */}
-          <div className="bg-white h-60 rounded-xl shadow-inner flex items-center justify-center text-black-400">
+          <div className="bg-customGray-300 h-60 rounded-xl shadow-inner flex items-center justify-center text-black-400">
             Banner Placeholder
           </div>
 
           {/* Box that holds filters + chart */}
-          <div className="bg-white shadow-md rounded-2xl p-6 flex flex-col justify-between flex-grow h-full">
+          <div className="bg-customGray-300 shadow-md rounded-2xl p-6 flex flex-col justify-between flex-grow h-full">
           <div className="flex flex-wrap items-center gap-2 mb-4">
   <Filters selectedStore={selectedStore} setSelectedStore={setSelectedStore} />
 
