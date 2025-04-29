@@ -1,7 +1,7 @@
 import React from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar/Navbar";
-import ChartComponent from "@/components/ChartComponent"; // Adjust path as needed
+import ChartComponent from "@/components/Dashboard/ChartComponent"; // Adjust path as needed
 
 const capitalizeName = (name: string) => {
   return name

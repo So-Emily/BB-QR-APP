@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar/Navbar";
-import UserProfile from "@/components/UserProfile";
-import TopItem from "@/components/TopItem";
-import TopStore from "@/components/TopStore";
-import Filters from "@/components/Filters";
-import ChartComponent from "@/components/ChartComponent";
+import UserProfile from "@/components/Dashboard/UserProfile";
+import TopItem from "@/components/Dashboard/TopItem";
+import TopStore from "@/components/Dashboard/TopStore";
+import Filters from "@/components/Dashboard/Filters";
+import ChartComponent from "@/components/Dashboard/ChartComponent";
 
 const Dashboard = () => {
   const { status, data: session } = useSession();
