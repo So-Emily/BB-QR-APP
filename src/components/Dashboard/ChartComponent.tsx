@@ -60,8 +60,8 @@ const ChartComponent = ({ userId, selectedStore }: { userId: string; selectedSto
             {
               label: "Total Scans per Product",
               data: scanCounts,
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              borderColor: "rgba(75, 192, 192, 1)",
+              backgroundColor: "rgba(195, 9, 241, 0.56)",
+              borderColor: "rgb(179, 33, 130)",
               borderWidth: 1,
             },
           ],
