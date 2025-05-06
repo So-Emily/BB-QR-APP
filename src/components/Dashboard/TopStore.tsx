@@ -11,7 +11,7 @@ const TopStore = () => {
     const getTopStore = async () => {
       if (status !== "authenticated") return;
 
-      const userId = session?.user?.id; // 👈 This assumes you added `id` to the JWT and session
+      const userId = session?.user?.id;
       if (!userId) return console.warn("No userId found in session");
 
       try {
@@ -26,7 +26,7 @@ const TopStore = () => {
   }, [session, status]);
 
   return (
-    <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
+    <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-full sm:w-[45%] lg:w-[280px] max-w-full">
       <h2 className="text-md font-semibold flex items-center gap-2">
         🏆 Top Store
       </h2>

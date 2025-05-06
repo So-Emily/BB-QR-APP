@@ -86,7 +86,7 @@ const ChartComponent = ({ userId, selectedStore }: { userId: string; selectedSto
   }
 
   return (
-    <div className="bg-customGray-300 w-full max-w-3xl mx-auto h-80 flex items-center justify-center">
+    <div className="bg-customGray-300 w-full h-full flex items-center justify-center">
       
       <div className="bg-customGray-400 shadow-md rounded-lg p-4 w-full h-full">
         <Bar
