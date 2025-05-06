@@ -1,6 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-const Filters = ({ selectedStore, setSelectedStore }: { selectedStore: string; setSelectedStore: (store: string) => void }) => {
+interface FiltersProps {
+  selectedStore: string;
+  setSelectedStore: (store: string) => void;
+}
+
+interface Store {
+  storeId: string;
+  storeName: string;
+}
+
+const Filters = ({ selectedStore, setSelectedStore }: FiltersProps) => {
+  const [stores, setStores] = useState<Store[]>([]);
+
+  useEffect(() => {
+    const fetchStores = async () => {
+      try {
+        const response = await fetch("/api/stores/for-suppliers");
+        const data = await response.json();
+        setStores(data);
+      } catch (error) {
+        console.error("Failed to fetch stores:", error);
+      }
+    };
+
+    fetchStores();
+  }, []);
+
   return (
     <div>
       <label className="block text-sm font-medium text-gray-700">Select Store</label>
@@ -10,8 +36,11 @@ const Filters = ({ selectedStore, setSelectedStore }: { selectedStore: string; s
         onChange={(e) => setSelectedStore(e.target.value)}
       >
         <option value="all">All Stores</option>
-        <option value="store1-1234">Store 1</option>
-        <option value="store2-1209">Store 2</option>
+        {stores.map((store) => (
+          <option key={store.storeId} value={store.storeId}>
+            {store.storeName || store.storeId}
+          </option>
+        ))}
       </select>
     </div>
   );

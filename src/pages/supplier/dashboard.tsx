@@ -24,19 +24,21 @@ const Dashboard = () => {
     <div className="min-h-screen bg-customGray-500 text-black">
       <Navbar />
 
+      <div className="w-full max-w-[1200px] mx-auto px-4">
+      
       <main className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 min-h-[calc(100vh-80px)]">
 
         {/* Left Panel */}
-        <section className="bg-customGray-300 shadow-md rounded-2xl p-6 flex flex-col items-center col-span-1">
+        <section className="bg-customGray-300 shadow-md rounded-2xl p-6 flex flex-col items-center col-span-">
           <UserProfile />
           
           {/* Grid for 2x2 stat cards */}
-          <div className="bg-customGray-400 p-8 rounded-2xl grid grid-cols-2 gap-4 mt-6">
+          <div className="bg-customGray-400 rounded-2xl p-4 grid grid-cols-2 gap-4 w-full aspect-square">
             <TopItem />
             <TopStore />
             
             {/* Placeholders */}
-            <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
+            <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-full sm:w-[45%] lg:w-[280px] max-w-full">
               <h2 className="text-md font-semibold flex items-center gap-2">
                 📦 Placeholder 1
               </h2>
@@ -44,7 +46,7 @@ const Dashboard = () => {
               <p className="text-gray-400 text-sm mt-2">(Coming Soon)</p>
             </div>
 
-            <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
+            <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-full sm:w-[45%] lg:w-[280px] max-w-full">
               <h2 className="text-md font-semibold flex items-center gap-2">
                 🔒 Placeholder 2
               </h2>
@@ -62,8 +64,11 @@ const Dashboard = () => {
           </div>
 
           {/* Box that holds filters + chart */}
-          <div className="bg-customGray-300 shadow-md rounded-2xl p-6 flex flex-col justify-between flex-grow h-full">
+          <div className="bg-customGray-300 shadow-md rounded-2xl p-6 flex flex-col justify-between flex-grow min-h-[500px]">
+
           <div className="flex flex-wrap items-center gap-2 mb-4">
+
+            
   <Filters selectedStore={selectedStore} setSelectedStore={setSelectedStore} />
 
   {/* 🔘 Tab-style buttons */}
@@ -89,8 +94,10 @@ const Dashboard = () => {
           </div>
         </section>
       </main>
+      </div>
     </div>
   );
 };
 
 export default Dashboard;
+

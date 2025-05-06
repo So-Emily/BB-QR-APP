@@ -26,8 +26,8 @@ const TopItem = () => {
   }, [session, status]);
 
   return (
-    <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-56">
-      <h2 className="text-md font-semibold flex items-center gap-2">
+    <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-full sm:w-[45%] lg:w-[280px] max-w-full">
+      <h2 className="text-sm font-semibold truncate">
         🔥 Top Product
       </h2>
       {topItem ? (
