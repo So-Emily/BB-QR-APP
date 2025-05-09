@@ -17,7 +17,7 @@ const UserProfile = () => {
       <img 
         src="/images/gallo2.png" 
         alt="User Profile"
-        className="w-70 h-70 rounded-full object-cover shadow-md"
+        className="w-30 h-32 rounded-full object-cover shadow-md"
       />
       <h1 className="text-3xl font-medium mt-4">{userName}</h1>
     </div>

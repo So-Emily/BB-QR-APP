@@ -21,83 +21,70 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-customGray-500 text-black">
+    <div className="flex flex-col min-h-screen bg-customGray-500 text-black">
       <Navbar />
 
-      <div className="w-full max-w-[1200px] mx-auto px-4">
-      
-      <main className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 min-h-[calc(100vh-80px)]">
+      <div className="w-full max-w-[1300px] mx-auto px-4 flex-1 flex flex-col">
+        <main className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 flex-1">
 
-        {/* Left Panel */}
-        <section className="bg-customGray-300 shadow-md rounded-2xl p-6 flex flex-col items-center col-span-">
-          <UserProfile />
-          
-          {/* Grid for 2x2 stat cards */}
-          <div className="bg-customGray-400 rounded-2xl p-4 grid grid-cols-2 gap-4 w-full aspect-square">
-            <TopItem />
-            <TopStore />
-            
-            {/* Placeholders */}
-            <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-full sm:w-[45%] lg:w-[280px] max-w-full">
-              <h2 className="text-md font-semibold flex items-center gap-2">
-                📦 Placeholder 1
-              </h2>
-              <div className="w-20 h-24 bg-gray-200 mt-2 rounded-md" />
-              <p className="text-gray-400 text-sm mt-2">(Coming Soon)</p>
+          {/* Left Panel */}
+          <section className="col-span-1 flex flex-col items-center bg-customGray-300 shadow-md rounded-2xl p-4">
+
+            <UserProfile />
+
+            {/* Grid for 2x2 stat cards */}
+            <div className="bg-customGray-400 rounded-2xl p-4 grid grid-cols-2 gap-4 w-full ">
+
+              <TopItem />
+              <TopStore />
+
+              {/* Placeholders */}
+              <div className="bg-customGray-300 shadow-lg rounded-xl p-1 flex flex-col items-center w-full">
+                <h2 className="text-md font-semibold flex items-center gap-2">💀Unpopular</h2>
+                <img 
+          src= "/images/wholefoods.png"
+          className="w-30 h-32 rounded-full object-cover shadow-md mt-2"/>
+                <p className="text-gray-400 text-sm mt-2">(Coming Soon)</p>
+                <p className= "text-gray-600 text-sm">(scans)</p>
+              </div>
+
+              <div className="bg-customGray-300 shadow-lg rounded-xl p-1 flex flex-col items-center w-full">
+                <h2 className="text-md font-semibold flex items-center gap-2">👻Ghost Town</h2>
+                <img 
+          src= "/images/wholefoods.png"
+          className="w-30 h-32 rounded-full object-cover shadow-md mt-2"/>
+                <p className="text-gray-400 text-sm mt-2">(Coming Soon)</p>
+                <p className= "text-gray-600 text-sm">(scans)</p>
+              </div>
+            </div>
+          </section>
+
+          {/* RIGHT SIDE WRAPPER */}
+          <section className="flex flex-col col-span-2 gap-4 overflow-auto">
+            {/* Banner */}
+            <div className="bg-customGray-300 h-[20vh] max-h-[150px] min-h-[100px] rounded-xl shadow-inner flex items-center justify-center text-black-400">
+              Banner Placeholder
             </div>
 
-            <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-full sm:w-[45%] lg:w-[280px] max-w-full">
-              <h2 className="text-md font-semibold flex items-center gap-2">
-                🔒 Placeholder 2
-              </h2>
-              <div className="w-20 h-24 bg-gray-200 mt-2 rounded-md" />
-              <p className="text-gray-400 text-sm mt-2">(Coming Soon)</p>
+            {/* Chart Section */}
+            <div className="bg-customGray-300 shadow-md rounded-2xl p-4 flex flex-col justify-between flex-grow overflow-hidden">
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <Filters selectedStore={selectedStore} setSelectedStore={setSelectedStore} />
+
+                <button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">Overview</button>
+                <button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">By Store</button>
+                <button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">Top 5</button>
+                <button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">Daily</button>
+                <button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">Monthly</button>
+              </div>
+
+              <ChartComponent userId={userId!} selectedStore={selectedStore} />
             </div>
-          </div>
-        </section>
-
-        {/* RIGHT SIDE WRAPPER */}
-        <section className="flex flex-col col-span-2 gap-6">
-          {/* ✅ Banner outside the chart box */}
-          <div className="bg-customGray-300 h-60 rounded-xl shadow-inner flex items-center justify-center text-black-400">
-            Banner Placeholder
-          </div>
-
-          {/* Box that holds filters + chart */}
-          <div className="bg-customGray-300 shadow-md rounded-2xl p-6 flex flex-col justify-between flex-grow min-h-[500px]">
-
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-
-            
-  <Filters selectedStore={selectedStore} setSelectedStore={setSelectedStore} />
-
-  {/* 🔘 Tab-style buttons */}
-  <button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
-  Overview
-</button>
-<button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
-  By Store
-</button>
-<button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
-  Top 5
-</button>
-<button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
-  Daily
-</button>
-<button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
-  Monthly
-</button>
-
-</div>
-
-            <ChartComponent userId={userId!} selectedStore={selectedStore} />
-          </div>
-        </section>
-      </main>
+          </section>
+        </main>
       </div>
     </div>
   );
 };
 
 export default Dashboard;
-
