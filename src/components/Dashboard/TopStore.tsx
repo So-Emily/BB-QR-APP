@@ -26,13 +26,17 @@ const TopStore = () => {
   }, [session, status]);
 
   return (
-    <div className="bg-customGray-300 shadow-lg rounded-xl p-4 flex flex-col items-center w-full sm:w-[45%] lg:w-[280px] max-w-full">
+    <div className="bg-customGray-300 shadow-lg rounded-xl p-1 flex flex-col items-center w-full">
       <h2 className="text-md font-semibold flex items-center gap-2">
-        🏆 Top Store
+        🏆Top Store
       </h2>
       {topStore ? (
         <>
-          <p className="text-lg font-bold text-center mt-3">{topStore.storeId}</p>
+          <img 
+          src= "/images/wholefoods.png"
+          className="w-30 h-32 rounded-full object-cover shadow-md mt-2"/>
+
+          <p className="text-sm font-bold text-center mt-3">{topStore.storeId}</p>
           <p className="text-gray-600 text-sm">({topStore.totalScans} scans)</p>
         </>
       ) : (
