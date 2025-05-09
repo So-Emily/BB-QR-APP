@@ -32,7 +32,7 @@ const TopStore = () => {
       </h2>
       {topStore ? (
         <>
-          <p className="text-lg font-bold text-center mt-3">Store ID: {topStore.storeId}</p>
+          <p className="text-lg font-bold text-center mt-3">{topStore.storeId}</p>
           <p className="text-gray-600 text-sm">({topStore.totalScans} scans)</p>
         </>
       ) : (
