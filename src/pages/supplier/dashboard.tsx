@@ -43,7 +43,7 @@ const Dashboard = () => {
                 <h2 className="text-md font-semibold flex items-center gap-2">💀Unpopular</h2>
                 <img 
           src= "/images/wholefoods.png"
-          className="w-30 h-32 rounded-full object-cover shadow-md mt-2"/>
+          className="w-20 h-20 rounded-full object-cover shadow-md mt-2"/>
                 <p className="text-gray-400 text-sm mt-2">(Coming Soon)</p>
                 <p className= "text-gray-600 text-sm">(scans)</p>
               </div>
@@ -52,7 +52,7 @@ const Dashboard = () => {
                 <h2 className="text-md font-semibold flex items-center gap-2">👻Ghost Town</h2>
                 <img 
           src= "/images/wholefoods.png"
-          className="w-30 h-32 rounded-full object-cover shadow-md mt-2"/>
+          className="w-20 h-20 rounded-full object-cover shadow-md mt-2"/>
                 <p className="text-gray-400 text-sm mt-2">(Coming Soon)</p>
                 <p className= "text-gray-600 text-sm">(scans)</p>
               </div>
