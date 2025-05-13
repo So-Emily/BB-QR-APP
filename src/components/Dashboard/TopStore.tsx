@@ -34,7 +34,7 @@ const TopStore = () => {
         <>
           <img 
           src= "/images/wholefoods.png"
-          className="w-30 h-32 rounded-full object-cover shadow-md mt-2"/>
+          className="w-20 h-20 rounded-full object-cover shadow-md mt-2"/>
 
           <p className="text-sm font-bold text-center mt-3">{topStore.storeId}</p>
           <p className="text-gray-600 text-sm">({topStore.totalScans} scans)</p>

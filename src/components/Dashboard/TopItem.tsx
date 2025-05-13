@@ -32,7 +32,7 @@ const TopItem = () => {
       </h2>
       {topItem ? (
         <>
-          <img src={topItem.image} alt={topItem.name} className="w-20 h-32 object-cover mt-2 rounded-md" />
+          <img src={topItem.image} alt={topItem.name} className="w-20 h-20 object-cover mt-2 rounded-md" />
           <p className="text-sm font-bold text-center mt-3">{topItem.name}</p>
           <p className="text-gray-600 text-sm">({topItem.totalScans} scans)</p>
         </>
