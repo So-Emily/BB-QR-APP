@@ -3,7 +3,6 @@ import { useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar/Navbar';
 import { listFilesInS3, getSignedUrlForS3, fetchProductDataFromS3 } from '@/lib/s3';
 import { QRCodeCanvas } from 'qrcode.react';
-//import Link from 'next/link';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
@@ -98,20 +97,7 @@ const DownloadQRCodesPage = () => {
 
                 // Remove duplicates and save to state
                 const uniqueQRCodes = Array.from(new Map(qrCodes.map(qrCode => [qrCode.key, qrCode])).values());
-
-                // Compare with cached QR codes
-                const cachedQRCodes = JSON.parse(localStorage.getItem('qrCodes') || '[]');
-                const cachedKeys = new Set(cachedQRCodes.map((qrCode: QRCode) => qrCode.key));
-                const newQRCodes = uniqueQRCodes.filter(qrCode => !cachedKeys.has(qrCode.key));
-
-                if (newQRCodes.length > 0) {
-                    // Update local storage with new QR codes
-                    const updatedQRCodes = [...cachedQRCodes, ...newQRCodes];
-                    localStorage.setItem('qrCodes', JSON.stringify(updatedQRCodes));
-                    setQRCodes(updatedQRCodes);
-                } else {
-                    setQRCodes(cachedQRCodes);
-                }
+                setQRCodes(uniqueQRCodes);
             } catch (err) {
                 console.error('Failed to fetch QR codes:', err);
                 setError('Failed to fetch QR codes: ' + err);
@@ -172,6 +158,8 @@ const DownloadQRCodesPage = () => {
     return (
         <div className="bg-customGray-500 min-h-screen">
             <Navbar />
+
+            {/* Main content */}
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <h1 className="text-2xl font-bold mb-4">QR Codes</h1>
                 {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -181,6 +169,25 @@ const DownloadQRCodesPage = () => {
                 >
                     Download All QR Codes
                 </button>
+
+                {/* New Section for Supplier Photos */}
+                <h5 className="text-xl font-semibold mb-2">Suppliers</h5>
+                <div className="rounded-lg bg-customGray-400 p-4 shadow-md mb-6">
+                    <div className="flex gap-4 overflow-x-auto">
+                        {/* Example supplier photos */}
+                        <div className="flex-shrink-0 w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-gray-500">
+                            <span>Supplier 1</span>
+                        </div>
+                        <div className="flex-shrink-0 w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-gray-500">
+                            <span>Supplier 2</span>
+                        </div>
+                        <div className="flex-shrink-0 w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-gray-500">
+                            <span>Supplier 3</span>
+                        </div>
+                        {/* Add more supplier photos as needed */}
+                    </div>
+                </div>
+
                 <div className="rounded-lg bg-customGray-400 p-6 shadow-md">
                     <div className="grid grid-cols-2 sm:grid-cols-7 md:grid-cols-5 lg:grid-cols-8 gap-5">
                         {qrCodes.map((qrCode, index) => (
@@ -198,16 +205,16 @@ const DownloadQRCodesPage = () => {
                                     includeMargin={true}
                                 />
                                 <h2 className="mt-2 text-lg font-semibold text-center">{formatProductName(qrCode.productName)}</h2>
-                                
-                                {/* qr hover pop up with names */}
+
+                                {/* QR hover pop-up with names */}
                                 {hoveredQRCode === qrCode.key && (
                                     <div
                                         className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-white text-black text-m p-4 rounded shadow-lg"
                                         style={{
                                             minWidth: '200px',
                                             textAlign: 'left',
-                                            backgroundColor: 'rgba(255, 255, 255, 0.9)', 
-                                            opacity: 0.95, 
+                                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                            opacity: 0.95,
                                         }}
                                     >
                                         <p><strong>Supplier:</strong> {qrCode.supplierName}</p>
@@ -224,7 +231,6 @@ const DownloadQRCodesPage = () => {
             {selectedQRCode && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
                     <div className="bg-white p-6 rounded shadow-lg">
-                        {/* Make the text black */}
                         <h2 className="text-xl font-bold mb-4 text-black">
                             Options for {formatProductName(selectedQRCode.productName)}
                         </h2>
