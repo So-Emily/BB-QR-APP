@@ -19,15 +19,6 @@ const nextConfig: NextConfig = {
         ],
     },
 
-    // Custom Webpack configuration to handle 'fs' module
-    // Added after npm run build to avoid 'fs' module errors in the browser
-    webpack: (config) => {
-        config.resolve.fallback = {
-            ...config.resolve.fallback,
-            fs: false, // Mock 'fs' module
-        };
-        return config;
-    },
 };
 
 export default nextConfig;
