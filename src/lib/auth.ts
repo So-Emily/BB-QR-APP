@@ -1,4 +1,3 @@
-// src/lib/auth.ts
 import bcrypt from 'bcryptjs';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
@@ -9,6 +8,10 @@ interface User {
     email: string;
     password: string;
     role: string;
+    storeDetails?: {
+        storeName: string;
+        storeNumber: number;
+    }; 
 }
 
 interface MongoDBUser {
@@ -17,20 +20,27 @@ interface MongoDBUser {
     email: string;
     password: string;
     role: string;
+    storeDetails?: {
+        storeName: string;
+        storeNumber: number;
+    }; 
 }
 
 export async function authenticateUser(identifier: string, password: string): Promise<User | null> {
     const normalizedIdentifier = identifier.toLowerCase();
     const user = await findUserByIdentifier(normalizedIdentifier);
+
     if (user && await bcrypt.compare(password, user.password)) {
         return {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
             password: user.password,
-            role: user.role
+            role: user.role,
+            storeDetails: user.storeDetails,
         };
     }
+
     return null;
 }
 

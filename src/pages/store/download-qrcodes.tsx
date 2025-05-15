@@ -181,10 +181,6 @@ const DownloadQRCodesPage = () => {
                         <div className="flex-shrink-0 w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-gray-500">
                             <span>Supplier 2</span>
                         </div>
-                        <div className="flex-shrink-0 w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-gray-500">
-                            <span>Supplier 3</span>
-                        </div>
-                        {/* Add more supplier photos as needed */}
                     </div>
                 </div>
 
