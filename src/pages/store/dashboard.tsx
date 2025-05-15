@@ -1,20 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar/Navbar";
-import ChartComponent from "@/components/Dashboard/ChartComponent"; // Adjust path as needed
-
-const capitalizeName = (name: string) => {
-  return name
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
-};
+import TopItem from "@/components/Dashboard/TopItem";
+import TopStore from "@/components/Dashboard/TopStore";
+import Filters from "@/components/Dashboard/Filters";
+import ChartComponent from "@/components/Dashboard/ChartComponent";
+import StoreProfile from "@/components/Dashboard/StoreProfile";
 
 const StoreDashboard = () => {
   const { status, data: session } = useSession();
-
-  // Replace this with the actual storeId from session
   const storeId = session?.user?.id || "64c2f1e91ab0f1a1b8c7b6c2"; // Example storeId
+  const [selectedStore, setSelectedStore] = useState("all");
 
   if (status === "loading") {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -25,43 +21,44 @@ const StoreDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-400 text-black">
-      {/* Header */}
+    <div className="flex flex-col min-h-screen bg-customGray-500 text-black">
       <Navbar />
+      <div className="w-full max-w-[1300px] mx-auto px-4 flex-1 flex flex-col">
+        <main className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 flex-1">
+          {/* Left Panel */}
+          <section className="col-span-1 flex flex-col items-center bg-customGray-300 shadow-md rounded-2xl p-4">
+            <StoreProfile />
 
-      {/* Main Content */}
-      <main className="p-6 flex flex-col md:flex-row space-y-6 md:space-y-0 md:space-x-6">
-        {/* Left Panel */}
-        <section className="bg-white shadow-md rounded-lg p-6 w-full md:w-1/3">
-          <div className="flex flex-col items-center">
-            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-              <span className="text-blue-500 text-3xl font-bold">S</span>
+            {/* Grid for 2x2 stat cards */}
+            <div className="bg-customGray-400 rounded-2xl p-4 grid grid-cols-2 gap-4 w-full">
+              <TopItem />
+              <TopStore />
             </div>
-            <h2 className="text-lg font-bold mb-4">
-              {capitalizeName(session?.user?.name || "Store Name")}
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {/* Placeholder items */}
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
-              <span className="text-sm">Top Product</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 bg-gray-200 rounded mb-2"></div>
-              <span className="text-sm">Top Supplier</span>
-            </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Right Panel */}
-        <section className="bg-white shadow-md rounded-lg p-6 flex-1">
-          <h1 className="text-lg font-bold mb-4">Product Scan Count</h1>
-          <div className="h-64 bg-gray-200 flex items-center justify-center rounded">
-            <ChartComponent userId={storeId} selectedStore={""} />
-          </div>
-        </section>
-      </main>
+          {/* Right Panel */}
+          <section className="flex flex-col col-span-2 gap-4 overflow-auto">
+            {/* Banner */}
+            <div className="bg-customGray-300 h-[20vh] max-h-[150px] min-h-[100px] rounded-xl shadow-inner flex items-center justify-center text-black-400">
+              Banner Placeholder
+            </div>
+
+            {/* Chart Section */}
+            <div className="bg-customGray-300 shadow-md rounded-2xl p-4 flex flex-col justify-between flex-grow overflow-hidden">
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <Filters selectedStore={selectedStore} setSelectedStore={setSelectedStore} />
+                <button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
+                  Overview
+                </button>
+                <button className="px-3 py-1 rounded-full bg-white border border-gray-300 text-sm text-gray-700 hover:bg-gray-50 transition">
+                  By Store
+                </button>
+              </div>
+              <ChartComponent userId={storeId} selectedStore={selectedStore} />
+            </div>
+          </section>
+        </main>
+      </div>
     </div>
   );
 };

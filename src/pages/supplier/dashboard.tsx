@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar/Navbar";
-import UserProfile from "@/components/Dashboard/UserProfile";
+import SupplierProfile from "@/components/Dashboard/SupplierProfile";
 import TopItem from "@/components/Dashboard/TopItem";
 import TopStore from "@/components/Dashboard/TopStore";
 import Filters from "@/components/Dashboard/Filters";
@@ -31,7 +31,7 @@ const Dashboard = () => {
           {/* Left Panel */}
           <section className="col-span-1 flex flex-col items-center bg-customGray-300 shadow-md rounded-2xl p-4">
 
-            <UserProfile />
+            <SupplierProfile />
 
             {/* Grid for 2x2 stat cards */}
             <div className="bg-customGray-400 rounded-2xl p-4 grid grid-cols-2 gap-4 w-full ">

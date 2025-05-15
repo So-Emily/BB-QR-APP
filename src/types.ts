@@ -24,4 +24,8 @@ export interface Product {
     status?: 'pending' | 'assigned';
     scanCount?: number;
     storeId?: string;
+    storeDetails?: {
+        storeName: string;
+        storeNumber: number;
+    };
 }
