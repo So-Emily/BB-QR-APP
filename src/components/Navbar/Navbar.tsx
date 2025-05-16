@@ -51,7 +51,7 @@ const Navbar = () => {
                 {status === 'authenticated' && session.user.role === 'store-manager' && (
                     <>
                         <li>
-                            <Link href="/store/download-qrcodes" passHref>
+                            <Link href="/store/view-qrcodes" passHref>
                                 <span role="link" className={styles.navItem}>QR Codes</span>
                             </Link>
                         </li>
