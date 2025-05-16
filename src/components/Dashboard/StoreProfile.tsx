@@ -90,12 +90,18 @@ const StoreProfile = () => {
         <div className="rounded-lg p-4 flex flex-col items-center w-64 relative">
             {/* Profile picture container */}
             <div className="relative group cursor-pointer w-[200px] h-[200px] rounded-full overflow-hidden bg-customGray-300" onClick={handleOpenModal}>
-                <img
-                    src={croppedImage || profileImage || "/images/profile-placeholder.png"}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/profile-placeholder.png"; }}
-                />
+            
+                {/* Profile image or placeholder */}
+                {profileImage ? (
+                    <img
+                        src={croppedImage || profileImage}
+                        alt="Profile"
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/images/profile-placeholder.png"; }}
+                    />
+                ) : (
+                    <div className="w-full h-full bg-customGray-300" />
+                )}
                 <div className="absolute rounded inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <span className="text-white text-sm">Change Profile Picture</span>
                 </div>
