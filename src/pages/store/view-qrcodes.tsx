@@ -14,11 +14,6 @@ interface QRCode {
     storeName: string;
 }
 
-interface Supplier {
-    name: string;
-    profileImageUrl: string;
-}
-
 const DownloadQRCodesPage = () => {
     const { data: session } = useSession();
     const [qrCodes, setQRCodes] = useState<QRCode[]>([]);

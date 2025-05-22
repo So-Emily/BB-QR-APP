@@ -87,7 +87,7 @@ const PrintQRCodesPage = () => {
 
                 setQRCodes(uniqueQRCodes);
                 setLoading(false);
-            } catch (err) {
+            } catch {
                 setError('Failed to fetch QR codes');
                 setLoading(false);
             }
