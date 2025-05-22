@@ -46,9 +46,13 @@ const PrintQRCodesPage = () => {
 
                 const storeName = `${storeDetails.storeName.replace(/\s+/g, '-').toLowerCase()}-${storeDetails.storeNumber}`;
                 const supplierKeys = await listFilesInS3('suppliers/');
-                const supplierNames = supplierKeys
-                    .filter((key): key is string => key !== undefined && key.includes('/stores/'))
-                    .map(key => key.split('/')[1]);
+                const supplierNames = Array.from(
+                    new Set(
+                        supplierKeys
+                            .filter((key): key is string => key !== undefined && key.includes('/stores/'))
+                            .map(key => key.split('/')[1])
+                    )
+                );
 
                 const qrCodePromises = supplierNames.flatMap(supplierName => {
                     if (!supplierName) return [];
@@ -81,23 +85,10 @@ const PrintQRCodesPage = () => {
                 // Remove duplicates based on the `key` property
                 const uniqueQRCodes = Array.from(new Map(qrCodes.map(qrCode => [qrCode.key, qrCode])).values());
 
-                // Compare with cached QR codes
-                const cachedQRCodes = JSON.parse(localStorage.getItem('printQRCodes') || '[]');
-                const cachedKeys = new Set(cachedQRCodes.map((qrCode: QRCode) => qrCode.key));
-                const newQRCodes = uniqueQRCodes.filter(qrCode => !cachedKeys.has(qrCode.key));
-
-                if (newQRCodes.length > 0) {
-                    // Update local storage with new QR codes
-                    const updatedQRCodes = [...cachedQRCodes, ...newQRCodes];
-                    localStorage.setItem('printQRCodes', JSON.stringify(updatedQRCodes));
-                    setQRCodes(updatedQRCodes);
-                } else {
-                    setQRCodes(cachedQRCodes);
-                }
-            } catch (err) {
-                console.error('Failed to fetch QR codes:', err);
-                setError('Failed to fetch QR codes: ' + err);
-            } finally {
+                setQRCodes(uniqueQRCodes);
+                setLoading(false);
+            } catch {
+                setError('Failed to fetch QR codes');
                 setLoading(false);
             }
         };
