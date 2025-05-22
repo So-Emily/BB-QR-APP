@@ -14,6 +14,11 @@ interface QRCode {
     storeName: string;
 }
 
+interface Supplier {
+    name: string;
+    profileImageUrl: string;
+}
+
 const DownloadQRCodesPage = () => {
     const { data: session } = useSession();
     const [qrCodes, setQRCodes] = useState<QRCode[]>([]);
@@ -21,6 +26,11 @@ const DownloadQRCodesPage = () => {
     const [loading, setLoading] = useState(true);
     const [hoveredQRCode, setHoveredQRCode] = useState<string | null>(null);
     const [selectedQRCode, setSelectedQRCodes] = useState<QRCode | null>(null);
+
+    // States for suppliers
+    const [suppliers, setSuppliers] = useState<{ name: string; profileImageUrl: string }[]>([]);
+    const [selectedSupplier, setSelectedSupplier] = useState<string | null>(null);
+    const [supplierSearch, setSupplierSearch] = useState('');
 
     const handleMouseEnter = (key: string) => {
         setHoveredQRCode(key);
@@ -57,17 +67,35 @@ const DownloadQRCodesPage = () => {
                 const storeDetails = userData.storeDetails;
                 if (!storeDetails || storeDetails.length === 0) {
                     setError('Store details not found');
-                    console.error('Store details not found');
                     setLoading(false);
                     return;
                 }
 
                 const storeName = `${storeDetails.storeName.replace(/\s+/g, '-').toLowerCase()}-${storeDetails.storeNumber}`;
                 const supplierKeys = await listFilesInS3('suppliers/');
-                const supplierNames = supplierKeys
-                    .filter((key): key is string => key !== undefined && key.includes('/stores/'))
-                    .map(key => key.split('/')[1]);
+                const supplierNames = Array.from(
+                    new Set(
+                        supplierKeys
+                            .filter((key): key is string => key !== undefined && key.includes('/stores/'))
+                            .map(key => key.split('/')[1])
+                    )
+                );
 
+                // Fetch supplier profiles AFTER supplierNames is defined
+                const supplierProfiles = await Promise.all(
+                    supplierNames.map(async (name) => {
+                        try {
+                            const url = await getSignedUrlForS3(`suppliers/${name}/profile-img.png`);
+                            return { name, profileImageUrl: url };
+                        } catch {
+                            return { name, profileImageUrl: '/images/profile-placeholder.png' };
+                        }
+                    })
+                );
+                setSuppliers(supplierProfiles);
+
+                // Fetch QR codes for each supplier
+                // Use flatMap to create an array of promises for each supplier
                 const qrCodePromises = supplierNames.flatMap(supplierName => {
                     if (!supplierName) return [];
                     return listFilesInS3(`suppliers/${supplierName}/stores/${storeName}/`).then(qrCodeKeys => {
@@ -155,6 +183,13 @@ const DownloadQRCodesPage = () => {
             .join(' '); // Join the words with spaces
     };
 
+    const formatSupplierName = (name: string) => {
+        return name
+            .split('-') // Split the name by dashes
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
+            .join(' '); // Join the words with spaces
+    }
+
     return (
         <div className="bg-customGray-500 min-h-screen">
             <Navbar />
@@ -170,42 +205,42 @@ const DownloadQRCodesPage = () => {
                     Download All QR Codes
                 </button>
 
-                {/* New Section for Supplier Photos */}
-                <h5 className="text-xl font-semibold mb-2">Suppliers</h5>
-                <div className="rounded-lg bg-customGray-400 p-4 shadow-md mb-6">
-                    <div className="flex gap-4 overflow-x-auto">
-                        {/* Example supplier photos */}
-                        <div className="flex-shrink-0 w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-gray-500">
-                            <span>Supplier 1</span>
-                        </div>
-                        <div className="flex-shrink-0 w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center text-gray-500">
-                            <span>Supplier 2</span>
-                        </div>
-                    </div>
+                {/* Supplier Section */}
+                <h2 className="text-l font-semibold mb-4">Suppliers</h2>
+
+                {/* Search box */}
+                <div className="mb-2">
+                    <input
+                        type="text"
+                        placeholder="Search for supplier"
+                        value={supplierSearch}
+                        onChange={e => setSupplierSearch(e.target.value)}
+                        className="px-3 py-2 rounded border w-64"
+                    />
                 </div>
 
-                <div className="rounded-lg bg-customGray-400 p-6 shadow-md">
-                    <div className="grid grid-cols-2 sm:grid-cols-7 md:grid-cols-5 lg:grid-cols-8 gap-5">
-                        {qrCodes.map((qrCode, index) => (
+                {/* Supplier Image Section */}
+                <div className="rounded-lg bg-customGray-400 p-4 shadow-md mb-6">
+                    <div className="flex gap-4 flex-nowrap overflow-visible">
+                        {suppliers
+                            .filter(s => s.name.toLowerCase().includes(supplierSearch.toLowerCase()))
+                            .map((supplier) => (
                             <div
-                                key={index}
-                                className="relative flex flex-col items-center"
-                                onMouseEnter={() => handleMouseEnter(qrCode.key)}
+                                key={supplier.name}
+                                className={`flex-shrink-0 w-20 h-20 rounded-full bg-gray-300 flex items-center justify-center relative cursor-pointer border-4 ${selectedSupplier === supplier.name ? 'border-green-500' : 'border-transparent'}`}
+                                onMouseEnter={() => setHoveredQRCode(supplier.name)}
                                 onMouseLeave={handleMouseLeave}
-                                onClick={() => handleQRCodeClick(qrCode)} // Open the menu on click
+                                onClick={() => setSelectedSupplier(selectedSupplier === supplier.name ? null : supplier.name)}
+                                style={{
+                                    backgroundImage: `url(${supplier.profileImageUrl})`,
+                                    backgroundSize: 'cover',
+                                    backgroundPosition: 'center',
+                                }}
                             >
-                                <QRCodeCanvas
-                                    value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`}
-                                    size={128}
-                                    level="H"
-                                    includeMargin={true}
-                                />
-                                <h2 className="mt-2 text-lg font-semibold text-center">{formatProductName(qrCode.productName)}</h2>
-
-                                {/* QR hover pop-up with names */}
-                                {hoveredQRCode === qrCode.key && (
+                                {/* Tooltip on hover */}
+                                {hoveredQRCode === supplier.name && (
                                     <div
-                                        className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-white text-black text-m p-4 rounded shadow-lg"
+                                        className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-white text-black text-m p-4 rounded shadow-lg z-10"
                                         style={{
                                             minWidth: '200px',
                                             textAlign: 'left',
@@ -213,11 +248,61 @@ const DownloadQRCodesPage = () => {
                                             opacity: 0.95,
                                         }}
                                     >
-                                        <p><strong>Supplier:</strong> {qrCode.supplierName}</p>
-                                        <p><strong>Item:</strong> {formatProductName(qrCode.productName)}</p>
+                                        <span className="font-semibold">Supplier:</span> <span>{formatSupplierName(supplier.name)}</span>
                                     </div>
                                 )}
                             </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* QR Code Section */}
+                <h2 className="text-l font-semibold mb-4">QR Codes</h2>
+
+                {/* little info section */}
+                <p className="text-sm text-gray-500 mb-4">
+                    Click on a QR code to view options.
+                    <br />
+                    Hover over a QR code to see supplier and item details.
+                </p>
+
+                {/* QR Code Grid */}
+                <div className="rounded-lg bg-customGray-400 p-6 shadow-md">
+                    <div className="grid grid-cols-2 sm:grid-cols-7 md:grid-cols-5 lg:grid-cols-8 gap-5">
+                        {qrCodes
+                            .filter(qrCode => !selectedSupplier || qrCode.supplierName === selectedSupplier)
+                            .map((qrCode, index) => (
+                                <div
+                                    key={index}
+                                    className="relative flex flex-col items-center"
+                                    onMouseEnter={() => handleMouseEnter(qrCode.key)}
+                                    onMouseLeave={handleMouseLeave}
+                                    onClick={() => handleQRCodeClick(qrCode)} // Open the menu on click
+                                >
+                                    <QRCodeCanvas
+                                        value={`${process.env.NEXT_PUBLIC_NEXTAUTH_URL}/store/products/${qrCode.supplierName}/${qrCode.storeName}/${qrCode.productName}`}
+                                        size={128}
+                                        level="H"
+                                        includeMargin={true}
+                                    />
+                                    <h2 className="mt-2 text-lg font-semibold text-center">{formatProductName(qrCode.productName)}</h2>
+
+                                    {/* QR hover pop-up with names */}
+                                    {hoveredQRCode === qrCode.key && (
+                                        <div
+                                            className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-full bg-white text-black text-m p-4 rounded shadow-lg"
+                                            style={{
+                                                minWidth: '200px',
+                                                textAlign: 'left',
+                                                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                                opacity: 0.95,
+                                            }}
+                                        >
+                                            <p><strong>Supplier:</strong> {formatSupplierName(qrCode.supplierName)}</p>
+                                            <p><strong>Item:</strong> {formatProductName(qrCode.productName)}</p>
+                                        </div>
+                                    )}
+                                </div>
                         ))}
                     </div>
                 </div>
