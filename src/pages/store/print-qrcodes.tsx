@@ -4,7 +4,6 @@ import Navbar from '@/components/Navbar/Navbar';
 import { listFilesInS3, fetchProductDataFromS3 } from '@/lib/s3';
 import { QRCodeCanvas } from 'qrcode.react';
 import styles from '@/styles/print-qrcodes.module.css';
-
 interface QRCode {
     key: string;
     signedUrl: string;
@@ -126,103 +125,133 @@ const PrintQRCodesPage = () => {
         setCustomSize(value);
     };
 
+    // Format product name
+    const formatProductName = (name: string) => {
+        return name
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
+
+    // Truncate ... helper
+    const truncate = (text: string, max: number) => {
+        return text.length > max ? text.slice(0, max) + '...' : text;
+    };
+
     if (loading) {
         return <div>Loading QR codes...</div>;
     }
 
     return (
-        <div>
+        <div className='bg-customGray-600'>
             {session && session.user && <Navbar />}
             <div className="container mx-auto p-4" style={{ marginLeft: 15, paddingLeft: 0 }}>
-                <h1 className="text-2xl font-bold mb-4">Print QR Codes</h1>
-                {error && <p className="text-red-500 mb-4">{error}</p>}
-
-                {/* Dropdown and custom input for QR code size */}
-                <div className="mb-4">
-                    <label htmlFor="qrCodeSize" className="block text-sm font-medium text-gray-100">
-                        Select QR Code Size:
-                    </label>
-                    <select
-                        id="qrCodeSize"
-                        value={qrCodeSize}
-                        onChange={(e) => {
-                            setQRCodeSize(Number(e.target.value));
-                            setCustomSize(''); // Clear custom size when selecting from dropdown
-                        }}
-                        className="mt-1 block w-25 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-800"
-                    >
-                        <option value={96}>Small (96px)</option>
-                        <option value={128}>Medium (128px)</option>
-                        <option value={192}>Large (192px)</option>
-                    </select>
-                    <label htmlFor="customSize" className="block text-sm font-medium text-gray-100 mt-4">
-                        Or Enter Custom Size (px):
-                    </label>
-                    <input
-                        id="customSize"
-                        type="text"
-                        value={customSize}
-                        onChange={handleCustomSizeChange}
-                        placeholder="Enter a custom size"
-                        className="mt-1 block w-25 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-800"
-                    />
-                </div>
-
-                {/* Product Selection Section */}
-                <div className="mb-4">
-                    <h2 className="text-lg font-bold mb-2">Select Products to Print</h2>
-                    <button
-                        onClick={handleSelectAll}
-                        className="mb-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                    >
-                        {selectedQRCodes.length === qrCodes.length ? 'Deselect All' : 'Select All'}
-                    </button>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {qrCodes.map((qrCode, index) => (
-                            <div key={index} className="flex items-center">
-                                <input
-                                    type="checkbox"
-                                    checked={selectedQRCodes.includes(qrCode.key)}
-                                    onChange={() => handleCheckboxChange(qrCode.key)}
-                                    className="mr-2"
-                                />
-                                <label>{qrCode.productName}</label>
-                            </div>
-                        ))}
+                <h1 className="text-2xl font-bold ">Print QR Codes</h1>
+                {error && <p className="text-red-500 ">{error}</p>}
+            
+                {/* Top controls row */}
+                <div className="flex flex-col md:flex-row md:items-end md:justify-start mb-4 gap-8">
+                    {/* Left: Title and select/deselect button */}
+                    <div>
+                        <h2 className="text-lg font-bold mb-2">Select Products to Print</h2>
+                        <button
+                            onClick={handleSelectAll}
+                            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                        >
+                            {selectedQRCodes.length === qrCodes.length ? 'Deselect All' : 'Select All'}
+                        </button>
+                    </div>
+                    {/* Right: QR code size controls */}
+                    <div className="md:ml-[20%]">
+                        <label htmlFor="qrCodeSize" className="block text-sm font-medium text-gray-100">
+                            Select QR Code Size:
+                        </label>
+                        <select
+                            id="qrCodeSize"
+                            value={qrCodeSize}
+                            onChange={(e) => {
+                                setQRCodeSize(Number(e.target.value));
+                                setCustomSize('');
+                            }}
+                            className="mt-1 block w-25 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-800"
+                        >
+                            <option value={96}>Small (96px)</option>
+                            <option value={128}>Medium (128px)</option>
+                            <option value={192}>Large (192px)</option>
+                        </select>
+                        <label htmlFor="customSize" className="block text-sm font-medium text-gray-100 mt-4">
+                            Or Enter Custom Size (px):
+                        </label>
+                        <input
+                            id="customSize"
+                            type="text"
+                            value={customSize}
+                            onChange={handleCustomSizeChange}
+                            placeholder="Enter a custom size"
+                            className="mt-1 block w-25 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-800"
+                        />
                     </div>
                 </div>
-
-                {/* QR Code Display Section */}
-                <div className={styles.printContainer}>
-                    <div className={styles.printWrapper}>
-                        <div
-                            className={styles.printableGrid}
-                            style={{
-                                gridTemplateColumns: `repeat(auto-fit, minmax(${qrCodeSize + 32}px, 1fr))`,
-                            }}
+            
+                {/* Main QR code/checkbox split */}
+                <div className="flex flex-col md:flex-row gap-8">
+                    {/* Left: Product Selection */}
+                    <div className="md:w-1/3 w-full flex flex-col rounded-lg bg-customGray-700 p-3">
+                        <div className="max-h-[600px] overflow-y-auto bg-customGray-500 shadow p-4 mb-4">
+                            {qrCodes.map((qrCode, index) => (
+                                <div key={index} className="flex items-center mb-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedQRCodes.includes(qrCode.key)}
+                                        onChange={() => handleCheckboxChange(qrCode.key)}
+                                        className="mr-2 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                        id={`qr-checkbox-${index}`}
+                                    />
+                                    <label htmlFor={`qr-checkbox-${index}`} className="truncate text-white">
+                                        {formatProductName(qrCode.productName)} 
+                                        {/* - {formatProductName(qrCode.supplierName)}  */}
+                                    </label>
+                                </div>
+                            ))}
+                        </div>
+                        <button
+                            onClick={handlePrint}
+                            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 w-full"
                         >
-                            {qrCodes
-                                .filter(qrCode => selectedQRCodes.includes(qrCode.key))
-                                .map((qrCode, index) => (
-                                    <div key={index} className={styles.printableItem}>
-                                        <p className="text-xs text-center">{qrCode.productName}</p>
-                                        <QRCodeCanvas
-                                            value={qrCode.signedUrl}
-                                            size={qrCodeSize}
-                                            level="H"
-                                            includeMargin={true}
-                                        />
-                                    </div>
-                                ))}
+                            Print QR Codes
+                        </button>
+                    </div>
+                    
+                    {/* Right: QR Code Display */}
+                    <div className="flex-1">
+                        <div className={styles.printContainer}>
+                            <div className={styles.printWrapper}>
+                                <div
+                                    className={styles.printableGrid}
+                                    style={{
+                                        gridTemplateColumns: `repeat(auto-fit, minmax(${qrCodeSize + 32}px, 1fr))`,
+                                    }}
+                                >
+                                    {qrCodes
+                                        .filter(qrCode => selectedQRCodes.includes(qrCode.key))
+                                        .map((qrCode, index) => (
+                                            <div key={index} className={styles.printableItem}>
+                                                <p className="text-xs text-center">
+                                                    {truncate(formatProductName(qrCode.productName), 19)}
+                                                </p>
+                                                <QRCodeCanvas
+                                                    value={qrCode.signedUrl}
+                                                    size={qrCodeSize}
+                                                    level="H"
+                                                    includeMargin={true}
+                                                />
+                                            </div>
+                                        ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <button
-                    onClick={handlePrint}
-                    className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                >
-                    Print QR Codes
-                </button>
             </div>
         </div>
     );
