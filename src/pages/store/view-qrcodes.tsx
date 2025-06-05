@@ -68,6 +68,7 @@ const DownloadQRCodesPage = () => {
 
                 const storeName = `${storeDetails.storeName.replace(/\s+/g, '-').toLowerCase()}-${storeDetails.storeNumber}`;
                 const supplierKeys = await listFilesInS3('suppliers/');
+
                 const supplierNames = Array.from(
                     new Set(
                         supplierKeys
@@ -76,9 +77,19 @@ const DownloadQRCodesPage = () => {
                     )
                 );
 
+                // Filter supplierNames to only those with at least one QR code for this store
+                const supplierNamesWithQRCodes: string[] = [];
+                for (const name of supplierNames) {
+                    const qrCodeKeys = await listFilesInS3(`suppliers/${name}/stores/${storeName}/`);
+                    const hasQRCodes = qrCodeKeys.some(key => key && key.endsWith('info.json'));
+                    if (hasQRCodes) {
+                        supplierNamesWithQRCodes.push(name);
+                    }
+                }
+
                 // Fetch supplier profiles AFTER supplierNames is defined
                 const supplierProfiles = await Promise.all(
-                    supplierNames.map(async (name) => {
+                    supplierNamesWithQRCodes.map(async (name) => {
                         try {
                             const url = await getSignedUrlForS3(`suppliers/${name}/profile-img.png`);
                             return { name, profileImageUrl: url };
@@ -91,7 +102,7 @@ const DownloadQRCodesPage = () => {
 
                 // Fetch QR codes for each supplier
                 // Use flatMap to create an array of promises for each supplier
-                const qrCodePromises = supplierNames.flatMap(supplierName => {
+                const qrCodePromises = supplierNamesWithQRCodes.flatMap(supplierName => {
                     if (!supplierName) return [];
                     return listFilesInS3(`suppliers/${supplierName}/stores/${storeName}/`).then(qrCodeKeys => {
                         return qrCodeKeys
@@ -171,6 +182,7 @@ const DownloadQRCodesPage = () => {
         return <div>Loading QR codes...</div>;
     }
 
+    // Functions to format product and supplier names
     const formatProductName = (name: string) => {
         return name
             .split('-') // Split the name by dashes
@@ -180,9 +192,9 @@ const DownloadQRCodesPage = () => {
 
     const formatSupplierName = (name: string) => {
         return name
-            .split('-') // Split the name by dashes
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize each word
-            .join(' '); // Join the words with spaces
+            .split('-') 
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1)) 
+            .join(' '); 
     }
 
     return (
@@ -226,12 +238,16 @@ const DownloadQRCodesPage = () => {
                                 onMouseEnter={() => setHoveredQRCode(supplier.name)}
                                 onMouseLeave={handleMouseLeave}
                                 onClick={() => setSelectedSupplier(selectedSupplier === supplier.name ? null : supplier.name)}
-                                style={{
-                                    backgroundImage: `url(${supplier.profileImageUrl})`,
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center',
-                                }}
                             >
+                                <img
+                                    src={supplier.profileImageUrl}
+                                    alt={formatSupplierName(supplier.name)}
+                                    className="w-full h-full rounded-full object-cover"
+                                    width={100}
+                                    height={100}
+                                    draggable={false}
+                                    style={{ display: 'block' }}
+                                />
                                 {/* Tooltip on hover */}
                                 {hoveredQRCode === supplier.name && (
                                     <div
@@ -280,7 +296,7 @@ const DownloadQRCodesPage = () => {
                                         level="H"
                                         includeMargin={true}
                                     />
-                                    <h2 className="mt-2 text-lg font-semibold text-center">{formatProductName(qrCode.productName)}</h2>
+                                    <h2 className="mt-2 text-lg text-customGray-800 font-semibold text-center">{formatProductName(qrCode.productName)}</h2>
 
                                     {/* QR hover pop-up with names */}
                                     {hoveredQRCode === qrCode.key && (

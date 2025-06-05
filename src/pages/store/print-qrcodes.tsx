@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar/Navbar';
 import { listFilesInS3, fetchProductDataFromS3 } from '@/lib/s3';
 import { QRCodeCanvas } from 'qrcode.react';
 import styles from '@/styles/print-qrcodes.module.css';
+import { truncate } from 'fs';
 
 interface QRCode {
     key: string;
@@ -126,6 +127,19 @@ const PrintQRCodesPage = () => {
         setCustomSize(value);
     };
 
+    // Format product name
+    const formatProductName = (name: string) => {
+        return name
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    };
+
+    // Truncate ... helper
+    const truncate = (text: string, max: number) => {
+        return text.length > max ? text.slice(0, max) + '...' : text;
+    };
+
     if (loading) {
         return <div>Loading QR codes...</div>;
     }
@@ -205,7 +219,9 @@ const PrintQRCodesPage = () => {
                                 .filter(qrCode => selectedQRCodes.includes(qrCode.key))
                                 .map((qrCode, index) => (
                                     <div key={index} className={styles.printableItem}>
-                                        <p className="text-xs text-center">{qrCode.productName}</p>
+                                        <p className="text-xs text-center">
+                                            {truncate(formatProductName(qrCode.productName), 21)}
+                                        </p>
                                         <QRCodeCanvas
                                             value={qrCode.signedUrl}
                                             size={qrCodeSize}
