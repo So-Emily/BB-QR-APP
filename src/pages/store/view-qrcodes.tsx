@@ -296,7 +296,7 @@ const DownloadQRCodesPage = () => {
                                         level="H"
                                         includeMargin={true}
                                     />
-                                    <h2 className="mt-2 text-lg text-customGray-800 font-semibold text-center">{formatProductName(qrCode.productName)}</h2>
+                                    <h2 className="mt-2 text-m text-customGray-800 font-semibold text-center">{formatProductName(qrCode.productName)}</h2>
 
                                     {/* QR hover pop-up with names */}
                                     {hoveredQRCode === qrCode.key && (
